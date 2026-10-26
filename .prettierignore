@@ -1,0 +1,13 @@
+node_modules
+dist
+target
+coverage
+pnpm-lock.yaml
+apps/desktop/src-tauri/gen
+apps/desktop/src-tauri/icons
+*.lock
+
+# Product specification documents (source of truth, not code)
+AGENTS.md
+README.md
+docs/

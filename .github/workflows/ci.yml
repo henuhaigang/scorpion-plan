@@ -1,0 +1,70 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  desktop-macos:
+    name: Desktop (macOS)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Format check
+        run: |
+          pnpm format:check
+          pnpm --filter dayflow-desktop format:rust:check
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm --filter dayflow-desktop exec tsc --noEmit
+      - name: Test
+        run: pnpm test
+      - name: Build
+        run: pnpm build
+
+  desktop-windows:
+    name: Desktop (Windows)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 11
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - name: Install
+        run: pnpm install --frozen-lockfile
+      - name: Format check
+        run: |
+          pnpm format:check
+          pnpm --filter dayflow-desktop format:rust:check
+      - name: Lint
+        run: pnpm lint
+      - name: Typecheck
+        run: pnpm --filter dayflow-desktop exec tsc --noEmit
+      - name: Test
+        run: pnpm test
+      - name: Build
+        run: pnpm build

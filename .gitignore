@@ -1,0 +1,32 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+build/
+*.tsbuildinfo
+
+# Rust
+target/
+
+# Tauri generated
+apps/desktop/src-tauri/gen/
+
+# Logs
+*.log
+npm-debug.log*
+pnpm-debug.log*
+
+# Environment / local secrets
+.env
+.env.*
+!.env.example
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+*.swp
+
+# Test artifacts
+coverage/

@@ -1,0 +1,17 @@
+{
+  "name": "dayflow",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@11.18.0",
+  "scripts": {
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "pnpm --filter dayflow-desktop lint && pnpm --filter dayflow-desktop lint:rust",
+    "test": "pnpm --filter dayflow-desktop test && pnpm --filter dayflow-desktop test:rust",
+    "build": "pnpm --filter dayflow-desktop build:desktop",
+    "ci": "bash scripts/ci.sh"
+  },
+  "devDependencies": {
+    "prettier": "3.9.10"
+  }
+}
