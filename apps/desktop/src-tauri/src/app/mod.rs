@@ -1,3 +1,4 @@
+pub mod backup_service;
 pub mod reminder_service;
 
 use std::sync::Arc;

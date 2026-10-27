@@ -11,6 +11,7 @@ pub mod repo;
 pub mod scheduler;
 pub mod time;
 
+use crate::app::backup_service::BackupService;
 use crate::app::reminder_service::ReminderService;
 use crate::app::{CreateTaskCommand, DesktopTaskService, TaskService, UpdateTaskCommand};
 use crate::domain::{GlobalReminderDefault, Task, TaskPriority};
@@ -249,6 +250,17 @@ fn soft_delete_task(
 }
 
 #[tauri::command]
+fn export_backup(backup: State<BackupService>, app: AppHandle) -> Result<String, String> {
+    let data_dir = app.path().app_data_dir().map_err(|e| e.to_string())?;
+    let backup_dir = BackupService::default_backup_dir(&data_dir);
+    std::fs::create_dir_all(&backup_dir).map_err(|e| e.to_string())?;
+    let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
+    let dest = backup_dir.join(format!("dayflow_backup_{}.sqlite", timestamp));
+    let path = backup.export(&dest).map_err(|e| e.to_string())?;
+    Ok(path.to_string_lossy().to_string())
+}
+
+#[tauri::command]
 fn get_global_reminder_default(
     state: State<DesktopTaskService>,
 ) -> Result<GlobalReminderDefault, String> {
@@ -299,9 +311,11 @@ pub fn run() {
                 notifier.clone(),
                 clock.clone(),
             ));
+            let backup_service = BackupService::new(conn.clone());
 
             app.manage(service);
             app.manage(reminder_service.clone());
+            app.manage(backup_service);
             app.manage(PanelController::default());
 
             panel::setup_tray(app.handle())?;
@@ -340,7 +354,8 @@ pub fn run() {
             restore_canceled_task,
             soft_delete_task,
             get_global_reminder_default,
-            set_global_reminder_default
+            set_global_reminder_default,
+            export_backup
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
