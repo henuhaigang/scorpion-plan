@@ -1,4 +1,5 @@
 pub mod migrate;
+pub mod reminder_job_repo;
 pub mod task_repo;
 
 use std::sync::{Arc, Mutex};
@@ -6,6 +7,7 @@ use std::sync::{Arc, Mutex};
 use rusqlite::Connection;
 
 pub use migrate::migrate;
+pub use reminder_job_repo::SqliteReminderJobRepository;
 pub use task_repo::{SqliteCategoryRepository, SqliteSettingsRepository, SqliteTaskRepository};
 
 /// A shareable SQLite connection.

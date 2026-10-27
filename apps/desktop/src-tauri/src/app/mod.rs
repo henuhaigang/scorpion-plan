@@ -1,3 +1,5 @@
+pub mod reminder_service;
+
 use std::sync::Arc;
 
 use chrono::{DateTime, NaiveDate, NaiveTime, Utc};
@@ -62,6 +64,15 @@ pub struct UpdateTaskCommand {
 pub struct TodayView {
     pub timed: Vec<TaskView>,
     pub untimed: Vec<TaskView>,
+}
+
+/// The full task board the UI renders: today (timed + untimed), legacy, future.
+/// All bucketing/sorting/overdue rules are computed here, never in the UI.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct TaskBoard {
+    pub today: TodayView,
+    pub legacy: Vec<TaskView>,
+    pub future: Vec<TaskView>,
 }
 
 /// Application use cases for the local task core.
@@ -215,6 +226,15 @@ impl<R: TaskRepository, S: SettingsRepository, C: Clock> TaskService<R, S, C> {
         };
         let tasks = self.tasks.list(&query)?;
         Ok(Self::sorted_views(tasks, now_local))
+    }
+
+    /// The complete board in a single call so the UI makes one round trip.
+    pub fn list_board(&self) -> Result<TaskBoard, AppError> {
+        Ok(TaskBoard {
+            today: self.list_today()?,
+            legacy: self.list_legacy()?,
+            future: self.list_future()?,
+        })
     }
 
     pub fn global_reminder_default(&self) -> Result<GlobalReminderDefault, AppError> {
@@ -673,6 +693,32 @@ mod tests {
         assert_eq!(legacy_tasks.len(), 1);
         assert_eq!(legacy_tasks[0].task.id, legacy);
         assert_eq!(legacy_tasks[0].bucket, TaskBucket::Legacy);
+    }
+
+    #[test]
+    fn list_board_combines_today_legacy_and_future() {
+        let (service, _repo, _settings) = service_at(now());
+
+        let legacy = Uuid::new_v4();
+        let mut legacy_cmd = quick_add(legacy, "遗留");
+        legacy_cmd.date = Some(date("2026-10-01"));
+        service.create_task(legacy_cmd).unwrap();
+
+        let today = Uuid::new_v4();
+        service.create_task(quick_add(today, "今天")).unwrap();
+
+        let future = Uuid::new_v4();
+        let mut future_cmd = quick_add(future, "未来");
+        future_cmd.date = Some(date("2026-11-02"));
+        service.create_task(future_cmd).unwrap();
+
+        let board = service.list_board().unwrap();
+        assert_eq!(board.today.untimed.len(), 1);
+        assert_eq!(board.today.untimed[0].task.id, today);
+        assert_eq!(board.legacy.len(), 1);
+        assert_eq!(board.legacy[0].task.id, legacy);
+        assert_eq!(board.future.len(), 1);
+        assert_eq!(board.future[0].task.id, future);
     }
 
     #[test]

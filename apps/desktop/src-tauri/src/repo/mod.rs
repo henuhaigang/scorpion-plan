@@ -2,10 +2,13 @@ use uuid::Uuid;
 
 use crate::domain::{GlobalReminderDefault, Task, TaskStatus};
 
+pub mod reminder_job_repo;
 pub mod sqlite;
 
+pub use reminder_job_repo::ReminderJobRepository;
 pub use sqlite::{
-    migrate, SqliteCategoryRepository, SqliteSettingsRepository, SqliteTaskRepository,
+    migrate, SqliteCategoryRepository, SqliteReminderJobRepository, SqliteSettingsRepository,
+    SqliteTaskRepository,
 };
 
 /// Repository-level failures. `NotFound` and `VersionConflict` are distinct so

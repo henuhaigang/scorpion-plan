@@ -120,3 +120,269 @@ body {
   border: 1px solid var(--border);
   border-radius: 8px;
 }
+
+.quick-add {
+  margin-bottom: 18px;
+}
+
+.quick-add-fields {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.quick-add-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.quick-add-field input {
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+}
+
+.quick-add-submit {
+  margin-left: auto;
+  padding: 8px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 8px;
+  background: var(--accent);
+  color: #ffffff;
+  font: inherit;
+  cursor: pointer;
+}
+
+.quick-add-submit:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.board {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.board-section {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.board-section-title {
+  font-size: 14px;
+  margin: 0 0 10px;
+  color: var(--muted);
+}
+
+.board-empty {
+  margin: 0;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.board-loading,
+.board-error {
+  padding: 12px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  margin-bottom: 18px;
+}
+
+.board-error {
+  border-color: #dc2626;
+}
+
+.board-error-detail {
+  margin: 6px 0 10px;
+  color: var(--muted);
+  font-size: 12px;
+  word-break: break-all;
+}
+
+.board-error button {
+  padding: 6px 10px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  cursor: pointer;
+}
+
+.task-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.task-row {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 10px;
+}
+
+.task-row--completed .task-title {
+  text-decoration: line-through;
+  color: var(--muted);
+}
+
+.task-row--canceled {
+  opacity: 0.7;
+}
+
+.task-row--overdue {
+  border-color: #dc2626;
+}
+
+.task-row-main {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.task-toggle {
+  flex-shrink: 0;
+  width: 22px;
+  height: 22px;
+  margin-top: 2px;
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  background: transparent;
+  color: var(--accent);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.task-toggle:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.task-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-title {
+  margin: 0 0 4px;
+  word-break: break-word;
+}
+
+.task-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.task-priority {
+  padding: 1px 6px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+}
+
+.task-priority--high {
+  border-color: #dc2626;
+  color: #dc2626;
+}
+
+.task-overdue {
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.task-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+.task-actions button {
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.task-actions button:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.task-actions button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.task-delete {
+  margin-left: auto;
+}
+
+.task-reschedule,
+.task-edit {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid var(--border);
+}
+
+.reschedule-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.reschedule-field input {
+  padding: 5px 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+}
+
+.reschedule-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.reschedule-actions button {
+  padding: 5px 9px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--fg);
+  font: inherit;
+  font-size: 12px;
+  cursor: pointer;
+}
