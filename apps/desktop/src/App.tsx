@@ -156,7 +156,7 @@ export default function App() {
         title,
         date: draftDate || undefined,
         time: draftTime || undefined,
-        all_day: false,
+        allDay: false,
         priority: "NORMAL",
       })
     ).then(() => {
@@ -174,13 +174,13 @@ export default function App() {
     onDelete: (view: TaskView) => run(() => api.softDeleteTask(view.task.id, view.task.version)),
     onReschedule: (view: TaskView, date: string, time?: string) =>
       run(() =>
-        api.rescheduleTask({ id: view.task.id, expected_version: view.task.version, date, time })
+        api.rescheduleTask({ id: view.task.id, expectedVersion: view.task.version, date, time })
       ),
     onUpdate: (view: TaskView, title: string, priority: string) =>
       run(() =>
         api.updateTask({
           id: view.task.id,
-          expected_version: view.task.version,
+          expectedVersion: view.task.version,
           title,
           priority,
         })

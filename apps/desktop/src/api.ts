@@ -8,22 +8,22 @@ export type CreateTaskArgs = {
   title: string;
   date?: string;
   time?: string;
-  all_day?: boolean;
+  allDay?: boolean;
   priority?: string;
-  category_id?: string;
+  categoryId?: string;
 };
 
 export type UpdateTaskArgs = {
   id: string;
-  expected_version: number;
+  expectedVersion: number;
   title?: string;
   priority?: string;
-  category_id?: string;
+  categoryId?: string;
 };
 
 export type RescheduleArgs = {
   id: string;
-  expected_version: number;
+  expectedVersion: number;
   date: string;
   /** `undefined` keeps the current time; `""` clears it; `"HH:MM"` sets it. */
   time?: string;
@@ -45,24 +45,24 @@ export function rescheduleTask(args: RescheduleArgs): Promise<Task> {
   return invoke<Task>("reschedule_task", args);
 }
 
-export function completeTask(id: string, expected_version: number): Promise<Task> {
-  return invoke<Task>("complete_task", { id, expected_version });
+export function completeTask(id: string, expectedVersion: number): Promise<Task> {
+  return invoke<Task>("complete_task", { id, expectedVersion });
 }
 
-export function undoCompletion(id: string, expected_version: number): Promise<Task> {
-  return invoke<Task>("undo_completion", { id, expected_version });
+export function undoCompletion(id: string, expectedVersion: number): Promise<Task> {
+  return invoke<Task>("undo_completion", { id, expectedVersion });
 }
 
-export function cancelTask(id: string, expected_version: number): Promise<Task> {
-  return invoke<Task>("cancel_task", { id, expected_version });
+export function cancelTask(id: string, expectedVersion: number): Promise<Task> {
+  return invoke<Task>("cancel_task", { id, expectedVersion });
 }
 
-export function restoreCanceledTask(id: string, expected_version: number): Promise<Task> {
-  return invoke<Task>("restore_canceled_task", { id, expected_version });
+export function restoreCanceledTask(id: string, expectedVersion: number): Promise<Task> {
+  return invoke<Task>("restore_canceled_task", { id, expectedVersion });
 }
 
-export function softDeleteTask(id: string, expected_version: number): Promise<Task> {
-  return invoke<Task>("soft_delete_task", { id, expected_version });
+export function softDeleteTask(id: string, expectedVersion: number): Promise<Task> {
+  return invoke<Task>("soft_delete_task", { id, expectedVersion });
 }
 
 /**

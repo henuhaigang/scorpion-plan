@@ -202,7 +202,7 @@ describe("Lifecycle actions", () => {
     await waitFor(() => {
       expect(mockedInvoke).toHaveBeenCalledWith("complete_task", {
         id: "t-1",
-        expected_version: 1,
+        expectedVersion: 1,
       });
     });
   });
@@ -215,7 +215,7 @@ describe("Lifecycle actions", () => {
     await waitFor(() => {
       expect(mockedInvoke).toHaveBeenCalledWith("complete_task", {
         id: "t-1",
-        expected_version: 1,
+        expectedVersion: 1,
       });
     });
   });
@@ -228,7 +228,7 @@ describe("Lifecycle actions", () => {
     await waitFor(() => {
       expect(mockedInvoke).toHaveBeenCalledWith("undo_completion", {
         id: "t-1",
-        expected_version: 2,
+        expectedVersion: 2,
       });
     });
   });
@@ -241,7 +241,7 @@ describe("Lifecycle actions", () => {
     await waitFor(() => {
       expect(mockedInvoke).toHaveBeenCalledWith("cancel_task", {
         id: "t-1",
-        expected_version: 1,
+        expectedVersion: 1,
       });
     });
   });
@@ -254,7 +254,7 @@ describe("Lifecycle actions", () => {
     await waitFor(() => {
       expect(mockedInvoke).toHaveBeenCalledWith("restore_canceled_task", {
         id: "t-1",
-        expected_version: 2,
+        expectedVersion: 2,
       });
     });
   });
@@ -267,7 +267,7 @@ describe("Lifecycle actions", () => {
     await waitFor(() => {
       expect(mockedInvoke).toHaveBeenCalledWith("soft_delete_task", {
         id: "t-1",
-        expected_version: 1,
+        expectedVersion: 1,
       });
     });
   });
@@ -296,7 +296,7 @@ describe("Reschedule", () => {
         "reschedule_task",
         expect.objectContaining({
           id: "t-1",
-          expected_version: 1,
+          expectedVersion: 1,
           date: "2026-11-02",
         })
       );
@@ -323,7 +323,7 @@ describe("Reschedule", () => {
         "reschedule_task",
         expect.objectContaining({
           id: "t-1",
-          expected_version: 1,
+          expectedVersion: 1,
           date: "2026-10-26",
           time: "",
         })
@@ -348,7 +348,7 @@ describe("Edit", () => {
         "update_task",
         expect.objectContaining({
           id: "t-1",
-          expected_version: 1,
+          expectedVersion: 1,
           title: "新标题",
           priority: "HIGH",
         })
