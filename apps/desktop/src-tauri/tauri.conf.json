@@ -19,7 +19,16 @@
         "minWidth": 320,
         "minHeight": 400,
         "center": true,
-        "resizable": true
+        "resizable": true,
+        "visible": false,
+        "focus": false,
+        "skipTaskbar": true,
+        "maximizable": false,
+        "dragDropEnabled": false,
+        "shadow": true,
+        "alwaysOnTop": false,
+        "visibleOnAllWorkspaces": false,
+        "acceptFirstMouse": false
       }
     ],
     "security": {

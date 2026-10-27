@@ -21,8 +21,9 @@ and a small, maintained dependency surface.
 ## Decision
 
 Use `rusqlite` 0.41 with the `bundled` feature (compiles SQLite from source,
-pinned by `Cargo.lock`). Migrations are plain SQL files embedded at compile time
-(`include_str!`) and applied by a small migration runner that maintains a
+pinned by `Cargo.lock`). Migrations are plain SQL statements embedded at compile
+time (M1 uses inline `&'static str` constants; `include_str!` files remain
+acceptable) and applied by a small migration runner that maintains a
 `schema_migrations(version, name, applied_at)` ledger table. Migrations are
 forward-only and idempotent per ledger entry.
 
