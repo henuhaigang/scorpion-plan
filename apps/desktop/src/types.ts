@@ -47,3 +47,7 @@ export interface TaskBoard {
   legacy: TaskView[];
   future: TaskView[];
 }
+
+export interface HistoryView {
+  items: TaskView[];
+}

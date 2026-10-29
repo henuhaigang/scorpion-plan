@@ -76,6 +76,12 @@ pub struct TaskBoard {
     pub future: Vec<TaskView>,
 }
 
+/// History view: completed and canceled tasks sorted by completion time descending.
+#[derive(Debug, Clone, serde::Serialize)]
+pub struct HistoryView {
+    pub items: Vec<TaskView>,
+}
+
 /// Application use cases for the local task core.
 ///
 /// The service owns no business rules itself: it validates input, applies
@@ -236,6 +242,26 @@ impl<R: TaskRepository, S: SettingsRepository, C: Clock> TaskService<R, S, C> {
             legacy: self.list_legacy()?,
             future: self.list_future()?,
         })
+    }
+
+    /// Returns completed and canceled tasks sorted by completed_at descending.
+    pub fn list_history(&self) -> Result<Vec<TaskView>, AppError> {
+        let now_local = self.clock.now_local();
+        let query = TaskQuery {
+            statuses: vec![TaskStatus::Completed, TaskStatus::Canceled],
+            ..Default::default()
+        };
+        let tasks = self.tasks.list(&query)?;
+        let mut views: Vec<TaskView> = tasks
+            .into_iter()
+            .map(|task| TaskViewPolicy::view(&task, now_local))
+            .collect();
+        views.sort_by(|a, b| {
+            let a_time = a.task.completed_at.unwrap_or(a.task.updated_at);
+            let b_time = b.task.completed_at.unwrap_or(b.task.updated_at);
+            b_time.cmp(&a_time)
+        });
+        Ok(views)
     }
 
     pub fn global_reminder_default(&self) -> Result<GlobalReminderDefault, AppError> {

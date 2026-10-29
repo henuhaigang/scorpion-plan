@@ -2,9 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import * as api from "./api";
 import { TaskRow } from "./TaskRow";
-import type { TaskBoard, TaskView } from "./types";
+import type { HistoryView, Task, TaskBoard, TaskView } from "./types";
 
-type PanelState = "visible" | "hidden";
+type MainView = "board" | "history";
 
 function todayISO(): string {
   const d = new Date();
@@ -19,13 +19,12 @@ interface SectionProps {
   empty: string;
   busy: boolean;
   handlers: {
-    onComplete: (view: TaskView) => void;
-    onUndo: (view: TaskView) => void;
-    onCancel: (view: TaskView) => void;
-    onRestore: (view: TaskView) => void;
-    onDelete: (view: TaskView) => void;
-    onReschedule: (view: TaskView, date: string, time?: string) => void;
-    onUpdate: (view: TaskView, title: string, priority: string) => void;
+    onComplete: (view: TaskView) => Promise<unknown>;
+    onUndo: (view: TaskView) => Promise<unknown>;
+    onRestore: (view: TaskView) => Promise<unknown>;
+    onDelete: (view: TaskView) => Promise<unknown>;
+    onReschedule: (view: TaskView, date: string, time?: string) => Promise<Task>;
+    onUpdate: (view: TaskView, title: string, priority: string) => Promise<Task>;
   };
 }
 
@@ -50,17 +49,21 @@ function Section({ id, title, views, empty, busy, handlers }: SectionProps) {
 
 export default function App() {
   const [board, setBoard] = useState<TaskBoard | null>(null);
+  const [history, setHistory] = useState<HistoryView | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [panelState, setPanelState] = useState<PanelState>("hidden");
+  const [mainView, setMainView] = useState<MainView>("board");
+  const [showQuickAdd, setShowQuickAdd] = useState(false);
 
   const [draft, setDraft] = useState("");
   const [draftDate, setDraftDate] = useState(todayISO());
   const [draftTime, setDraftTime] = useState("");
+  const [draftPriority, setDraftPriority] = useState("NORMAL");
   const saveTimer = useRef<number | null>(null);
   const draftRef = useRef(draft);
   draftRef.current = draft;
+  const quickAddRef = useRef<HTMLTextAreaElement>(null);
 
   const saveDraft = useCallback((value: string) => {
     if (saveTimer.current !== null) {
@@ -83,16 +86,27 @@ export default function App() {
     }
   }, []);
 
+  const refreshHistory = useCallback(async () => {
+    try {
+      const next = await api.listHistory();
+      setHistory(next);
+      setError(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     let active = true;
 
-    Promise.all([invoke<string>("load_draft"), invoke<string>("panel_state")])
-      .then(([savedDraft, state]) => {
+    invoke<string>("load_draft")
+      .then((savedDraft) => {
         if (!active) {
           return;
         }
         setDraft(savedDraft);
-        setPanelState(state === "visible" ? "visible" : "hidden");
       })
       .catch(() => undefined);
 
@@ -104,15 +118,31 @@ export default function App() {
   }, [refresh]);
 
   useEffect(() => {
+    if (mainView === "history" && !history) {
+      refreshHistory();
+    }
+  }, [mainView, history, refreshHistory]);
+
+  useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        event.preventDefault();
-        invoke("panel_hide").catch(() => undefined);
+        if (showQuickAdd) {
+          setShowQuickAdd(false);
+        } else {
+          event.preventDefault();
+          invoke("panel_hide").catch(() => undefined);
+        }
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+  }, [showQuickAdd]);
+
+  useEffect(() => {
+    if (showQuickAdd) {
+      quickAddRef.current?.focus();
+    }
+  }, [showQuickAdd]);
 
   useEffect(() => {
     return () => {
@@ -129,48 +159,58 @@ export default function App() {
   };
 
   const run = useCallback(
-    async (fn: () => Promise<unknown>) => {
+    async function run<T>(fn: () => Promise<T>): Promise<T> {
       setBusy(true);
       try {
-        await fn();
-        await refresh();
+        const result = await fn();
+        await Promise.all([refresh(), refreshHistory()]);
+        return result;
       } catch (err) {
         setError(err instanceof Error ? err.message : String(err));
+        throw err;
       } finally {
         setBusy(false);
       }
     },
-    [refresh]
+    [refresh, refreshHistory]
   );
 
-  const addTask = () => {
+  const addTask = async () => {
     const title = draft.trim();
     if (!title) {
       setError("请输入任务内容");
       return;
     }
     const id = api.newId();
-    run(() =>
-      api.createTask({
-        id,
-        title,
-        date: draftDate || undefined,
-        time: draftTime || undefined,
-        allDay: false,
-        priority: "NORMAL",
-      })
-    ).then(() => {
+    try {
+      await run(() =>
+        api.createTask({
+          id,
+          title,
+          date: draftDate || undefined,
+          time: draftTime || undefined,
+          allDay: false,
+          priority: draftPriority,
+        })
+      );
       setDraft("");
       saveDraft("");
-    });
+      setShowQuickAdd(false);
+    } catch {
+      return;
+    }
   };
 
   const handlers = {
     onComplete: (view: TaskView) => run(() => api.completeTask(view.task.id, view.task.version)),
-    onUndo: (view: TaskView) => run(() => api.undoCompletion(view.task.id, view.task.version)),
-    onCancel: (view: TaskView) => run(() => api.cancelTask(view.task.id, view.task.version)),
+    onUndo: (view: TaskView) =>
+      run(() => api.undoCompletion(view.task.id, view.task.version)).then(() => {
+        setMainView("board");
+      }),
     onRestore: (view: TaskView) =>
-      run(() => api.restoreCanceledTask(view.task.id, view.task.version)),
+      run(() => api.restoreCanceledTask(view.task.id, view.task.version)).then(() => {
+        setMainView("board");
+      }),
     onDelete: (view: TaskView) => run(() => api.softDeleteTask(view.task.id, view.task.version)),
     onReschedule: (view: TaskView, date: string, time?: string) =>
       run(() =>
@@ -196,107 +236,151 @@ export default function App() {
           <h1 className="panel-title">DayFlow</h1>
           <p className="panel-subtitle">让重要的事情，主动出现在你面前。</p>
         </div>
-        <span className="panel-state" data-testid="panel-state">
-          {panelState === "visible" ? "面板可见" : "面板隐藏"}
-        </span>
+        <button
+          type="button"
+          className="add-btn"
+          data-testid="add-btn"
+          onClick={() => setShowQuickAdd((v) => !v)}
+        >
+          {showQuickAdd ? "收起" : "+ 添加"}
+        </button>
       </header>
 
-      <form
-        className="quick-add"
-        onSubmit={(event) => {
-          event.preventDefault();
-          addTask();
-        }}
-      >
-        <label className="draft-label" htmlFor="quick-add">
-          快速添加
-        </label>
-        <textarea
-          id="quick-add"
-          className="draft-input"
-          value={draft}
-          onChange={(event) => updateDraft(event.target.value)}
-          placeholder="输入任务，按 Esc 隐藏面板"
-          data-testid="draft-input"
-        />
-        <div className="quick-add-fields">
-          <label className="quick-add-field">
-            <span>日期</span>
-            <input
-              type="date"
-              value={draftDate}
-              onChange={(event) => setDraftDate(event.target.value)}
-            />
-          </label>
-          <label className="quick-add-field">
-            <span>时间</span>
-            <input
-              type="time"
-              value={draftTime}
-              onChange={(event) => setDraftTime(event.target.value)}
-            />
-          </label>
-          <button type="submit" className="quick-add-submit" disabled={busy}>
-            添加
-          </button>
-        </div>
-      </form>
+      {showQuickAdd && (
+        <form
+          className="quick-add"
+          onSubmit={(event) => {
+            event.preventDefault();
+            void addTask();
+          }}
+        >
+          <textarea
+            ref={quickAddRef}
+            className="draft-input"
+            value={draft}
+            onChange={(event) => updateDraft(event.target.value)}
+            placeholder="输入任务内容"
+            data-testid="draft-input"
+            rows={2}
+          />
+          <div className="quick-add-fields">
+            <label className="quick-add-field">
+              <span>日期</span>
+              <input
+                type="date"
+                value={draftDate}
+                onChange={(event) => setDraftDate(event.target.value)}
+              />
+            </label>
+            <label className="quick-add-field">
+              <span>时间</span>
+              <input
+                type="time"
+                value={draftTime}
+                onChange={(event) => setDraftTime(event.target.value)}
+              />
+            </label>
+            <label className="quick-add-field">
+              <span>优先级</span>
+              <select
+                value={draftPriority}
+                onChange={(event) => setDraftPriority(event.target.value)}
+              >
+                <option value="LOW">低</option>
+                <option value="NORMAL">普通</option>
+                <option value="HIGH">高</option>
+              </select>
+            </label>
+            <button type="submit" className="quick-add-submit" disabled={busy}>
+              添加
+            </button>
+          </div>
+        </form>
+      )}
 
       {loading ? (
         <p className="board-loading" data-testid="board-loading">
           正在加载任务…
         </p>
-      ) : error && !board ? (
+      ) : error && !board && !history ? (
         <div className="board-error" role="alert" data-testid="board-error">
           <p>无法加载任务列表。</p>
           <p className="board-error-detail">{error}</p>
-          <button type="button" onClick={() => refresh()}>
+          <button
+            type="button"
+            onClick={() => (mainView === "board" ? refresh() : refreshHistory())}
+          >
             重试
           </button>
         </div>
-      ) : board ? (
-        <div className="board">
-          <Section
-            id="today-timed"
-            title="今日 · 定时"
-            views={board.today.timed}
-            empty="今天还没有定时任务。"
-            busy={busy}
-            handlers={handlers}
-          />
-          <Section
-            id="today-untimed"
-            title="今日 · 待安排"
-            views={board.today.untimed}
-            empty="今天还没有待安排的任务。"
-            busy={busy}
-            handlers={handlers}
-          />
-          <Section
-            id="legacy"
-            title="遗留"
-            views={board.legacy}
-            empty="没有遗留任务。"
-            busy={busy}
-            handlers={handlers}
-          />
-          <Section
-            id="future"
-            title="未来"
-            views={board.future}
-            empty="还没有安排到未来的任务。"
-            busy={busy}
-            handlers={handlers}
-          />
+      ) : mainView === "board" ? (
+        board && (
+          <div className="board">
+            <Section
+              id="today-timed"
+              title="今日 · 定时"
+              views={board.today.timed}
+              empty="今天还没有定时任务。"
+              busy={busy}
+              handlers={handlers}
+            />
+            <Section
+              id="today-untimed"
+              title="今日 · 待安排"
+              views={board.today.untimed}
+              empty="今天还没有待安排的任务。"
+              busy={busy}
+              handlers={handlers}
+            />
+            <Section
+              id="legacy"
+              title="遗留"
+              views={board.legacy}
+              empty="没有遗留任务。"
+              busy={busy}
+              handlers={handlers}
+            />
+            <Section
+              id="future"
+              title="未来"
+              views={board.future}
+              empty="还没有安排到未来的任务。"
+              busy={busy}
+              handlers={handlers}
+            />
+          </div>
+        )
+      ) : (
+        <div className="history-view">
+          <div className="history-header">
+            <button type="button" onClick={() => setMainView("board")}>
+              ← 返回
+            </button>
+            <h2>历史</h2>
+          </div>
+          {history && history.items.length === 0 ? (
+            <p className="board-empty">暂无历史记录。</p>
+          ) : (
+            history && (
+              <ul className="task-list">
+                {history.items.map((view) => (
+                  <TaskRow key={view.task.id} view={view} busy={busy} {...handlers} />
+                ))}
+              </ul>
+            )
+          )}
         </div>
-      ) : null}
+      )}
 
       <div className="panel-actions">
+        <button
+          type="button"
+          onClick={() => setMainView(mainView === "board" ? "history" : "board")}
+        >
+          {mainView === "board" ? "历史" : "任务"}
+        </button>
         <button type="button" onClick={() => invoke("panel_hide").catch(() => undefined)}>
           隐藏面板
-        </button>
-        <button type="button" onClick={() => invoke("panel_toggle").catch(() => undefined)}>
-          切换面板
         </button>
         <button type="button" onClick={() => invoke("panel_quit").catch(() => undefined)}>
           退出

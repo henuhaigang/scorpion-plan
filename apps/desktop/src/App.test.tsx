@@ -46,7 +46,8 @@ function boardWith(untimed: TaskView[]): TaskBoard {
 beforeEach(() => {
   vi.clearAllMocks();
   board = { today: { timed: [], untimed: [] }, legacy: [], future: [] };
-  mockedInvoke.mockImplementation((command: string) => {
+  mockedInvoke.mockImplementation((command: string, args?: unknown) => {
+    const a = args as Record<string, unknown> | undefined;
     if (command === "load_draft") {
       return Promise.resolve("保存的草稿");
     }
@@ -55,6 +56,30 @@ beforeEach(() => {
     }
     if (command === "list_board") {
       return Promise.resolve(board);
+    }
+    if (command === "update_task") {
+      return Promise.resolve(
+        makeTask({
+          id: a?.id as string,
+          title: a?.title as string,
+          priority: a?.priority as Task["priority"],
+          version: (a?.expectedVersion as number) + 1,
+        })
+      );
+    }
+    if (command === "reschedule_task") {
+      const time = a?.time;
+      return Promise.resolve(
+        makeTask({
+          id: a?.id as string,
+          current_schedule: {
+            date: a?.date as string,
+            time: time === "" ? null : (time as string | null),
+            all_day: false,
+          },
+          version: (a?.expectedVersion as number) + 1,
+        })
+      );
     }
     return Promise.resolve();
   });
@@ -77,11 +102,13 @@ describe("App shell", () => {
 
   it("loads the persisted draft", async () => {
     render(<App />);
+    fireEvent.click(await screen.findByTestId("add-btn"));
     expect(await screen.findByDisplayValue("保存的草稿")).toBeInTheDocument();
   });
 
   it("saves draft changes through the local service", async () => {
     render(<App />);
+    fireEvent.click(await screen.findByTestId("add-btn"));
     const input = await screen.findByTestId("draft-input");
 
     fireEvent.change(input, { target: { value: "新草稿" } });
@@ -93,7 +120,7 @@ describe("App shell", () => {
 
   it("hides the panel when Escape is pressed", async () => {
     render(<App />);
-    await screen.findByTestId("draft-input");
+    await screen.findByTestId("add-btn");
 
     fireEvent.keyDown(window, { key: "Escape" });
 
@@ -163,6 +190,7 @@ describe("Board rendering", () => {
 describe("Quick add", () => {
   it("creates a task with a client-generated UUID", async () => {
     render(<App />);
+    fireEvent.click(await screen.findByTestId("add-btn"));
     const input = await screen.findByTestId("draft-input");
     fireEvent.change(input, { target: { value: "新任务" } });
     fireEvent.click(screen.getByRole("button", { name: "添加" }));
@@ -182,6 +210,7 @@ describe("Quick add", () => {
 
   it("rejects an empty quick add", async () => {
     render(<App />);
+    fireEvent.click(await screen.findByTestId("add-btn"));
     const input = await screen.findByTestId("draft-input");
     fireEvent.change(input, { target: { value: "   " } });
     fireEvent.click(screen.getByRole("button", { name: "添加" }));
@@ -194,19 +223,6 @@ describe("Quick add", () => {
 });
 
 describe("Lifecycle actions", () => {
-  it("completes a task", async () => {
-    board = boardWith([makeView(makeTask({ id: "t-1" }))]);
-    render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "完成" }));
-
-    await waitFor(() => {
-      expect(mockedInvoke).toHaveBeenCalledWith("complete_task", {
-        id: "t-1",
-        expectedVersion: 1,
-      });
-    });
-  });
-
   it("completes a task via the toggle control", async () => {
     board = boardWith([makeView(makeTask({ id: "t-1" }))]);
     render(<App />);
@@ -229,19 +245,6 @@ describe("Lifecycle actions", () => {
       expect(mockedInvoke).toHaveBeenCalledWith("undo_completion", {
         id: "t-1",
         expectedVersion: 2,
-      });
-    });
-  });
-
-  it("cancels a task", async () => {
-    board = boardWith([makeView(makeTask({ id: "t-1" }))]);
-    render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "取消" }));
-
-    await waitFor(() => {
-      expect(mockedInvoke).toHaveBeenCalledWith("cancel_task", {
-        id: "t-1",
-        expectedVersion: 1,
       });
     });
   });
@@ -273,8 +276,31 @@ describe("Lifecycle actions", () => {
   });
 });
 
-describe("Reschedule", () => {
-  it("reschedules to a new date keeping the time", async () => {
+describe("Edit (combined form)", () => {
+  it("edits a task's title and priority", async () => {
+    board = boardWith([makeView(makeTask({ id: "t-1" }))]);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "编辑" }));
+
+    const row = screen.getByTestId("row-t-1");
+    fireEvent.change(within(row).getByPlaceholderText("任务标题"), { target: { value: "新标题" } });
+    fireEvent.change(within(row).getByLabelText("优先级"), { target: { value: "HIGH" } });
+    fireEvent.click(within(row).getByRole("button", { name: "保存" }));
+
+    await waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith(
+        "update_task",
+        expect.objectContaining({
+          id: "t-1",
+          expectedVersion: 1,
+          title: "新标题",
+          priority: "HIGH",
+        })
+      );
+    });
+  });
+
+  it("reschedules to a new date via the edit form", async () => {
     board = boardWith([
       makeView(
         makeTask({
@@ -284,12 +310,12 @@ describe("Reschedule", () => {
       ),
     ]);
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "改期" }));
+    fireEvent.click(await screen.findByRole("button", { name: "编辑" }));
 
     const row = screen.getByTestId("row-t-1");
     const dateInput = within(row).getByLabelText("日期");
     fireEvent.change(dateInput, { target: { value: "2026-11-02" } });
-    fireEvent.click(within(row).getByRole("button", { name: "确定" }));
+    fireEvent.click(within(row).getByRole("button", { name: "保存" }));
 
     await waitFor(() => {
       expect(mockedInvoke).toHaveBeenCalledWith(
@@ -298,12 +324,13 @@ describe("Reschedule", () => {
           id: "t-1",
           expectedVersion: 1,
           date: "2026-11-02",
+          time: "09:00",
         })
       );
     });
   });
 
-  it("can clear the time when rescheduling", async () => {
+  it("clears the task time when the edit form time field is emptied", async () => {
     board = boardWith([
       makeView(
         makeTask({
@@ -313,10 +340,12 @@ describe("Reschedule", () => {
       ),
     ]);
     render(<App />);
-    fireEvent.click(await screen.findByRole("button", { name: "改期" }));
+    fireEvent.click(await screen.findByRole("button", { name: "编辑" }));
 
     const row = screen.getByTestId("row-t-1");
-    fireEvent.click(within(row).getByRole("button", { name: "清除时间" }));
+    const timeInput = within(row).getByLabelText("时间");
+    fireEvent.change(timeInput, { target: { value: "" } });
+    fireEvent.click(within(row).getByRole("button", { name: "保存" }));
 
     await waitFor(() => {
       expect(mockedInvoke).toHaveBeenCalledWith(
@@ -330,17 +359,22 @@ describe("Reschedule", () => {
       );
     });
   });
-});
 
-describe("Edit", () => {
-  it("edits a task's title and priority", async () => {
-    board = boardWith([makeView(makeTask({ id: "t-1" }))]);
+  it("updates title first, then reschedules using the updated version", async () => {
+    board = boardWith([
+      makeView(
+        makeTask({
+          id: "t-1",
+          current_schedule: { date: "2026-10-26", time: null, all_day: false },
+        })
+      ),
+    ]);
     render(<App />);
     fireEvent.click(await screen.findByRole("button", { name: "编辑" }));
 
     const row = screen.getByTestId("row-t-1");
-    fireEvent.change(within(row).getByLabelText("标题"), { target: { value: "新标题" } });
-    fireEvent.change(within(row).getByLabelText("优先级"), { target: { value: "HIGH" } });
+    fireEvent.change(within(row).getByPlaceholderText("任务标题"), { target: { value: "新标题" } });
+    fireEvent.change(within(row).getByLabelText("日期"), { target: { value: "2026-11-02" } });
     fireEvent.click(within(row).getByRole("button", { name: "保存" }));
 
     await waitFor(() => {
@@ -350,7 +384,15 @@ describe("Edit", () => {
           id: "t-1",
           expectedVersion: 1,
           title: "新标题",
-          priority: "HIGH",
+        })
+      );
+      expect(mockedInvoke).toHaveBeenCalledWith(
+        "reschedule_task",
+        expect.objectContaining({
+          id: "t-1",
+          expectedVersion: 2,
+          date: "2026-11-02",
+          time: "",
         })
       );
     });

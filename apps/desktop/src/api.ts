@@ -1,5 +1,5 @@
 import { invoke } from "@tauri-apps/api/core";
-import type { Task, TaskBoard } from "./types";
+import type { Task, TaskBoard, HistoryView } from "./types";
 
 // Type aliases (not interfaces) so they carry an implicit index signature and
 // satisfy Tauri's `InvokeArgs = Record<string, unknown>`.
@@ -31,6 +31,10 @@ export type RescheduleArgs = {
 
 export function listBoard(): Promise<TaskBoard> {
   return invoke<TaskBoard>("list_board");
+}
+
+export function listHistory(): Promise<HistoryView> {
+  return invoke<HistoryView>("list_history");
 }
 
 export function createTask(args: CreateTaskArgs): Promise<Task> {

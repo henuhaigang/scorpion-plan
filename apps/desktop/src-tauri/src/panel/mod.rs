@@ -1,4 +1,5 @@
-use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::time::{SystemTime, UNIX_EPOCH};
 
 use tauri::{
     menu::{Menu, MenuItem},
@@ -10,17 +11,26 @@ use tauri::{
 pub struct PanelController {
     visible: AtomicBool,
     tray_hover: AtomicBool,
-    suppress_until_focused: AtomicBool,
+    hide_guard_until_ms: AtomicU64,
+}
+
+fn now_ms() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .map(|d| d.as_millis() as u64)
+        .unwrap_or(0)
 }
 
 impl PanelController {
     pub fn begin_show(&self) {
-        self.suppress_until_focused.store(true, Ordering::SeqCst);
         self.visible.store(true, Ordering::SeqCst);
+        self.hide_guard_until_ms
+            .store(now_ms().saturating_add(750), Ordering::SeqCst);
     }
 
     pub fn begin_hide(&self) {
         self.visible.store(false, Ordering::SeqCst);
+        self.hide_guard_until_ms.store(0, Ordering::SeqCst);
     }
 
     pub fn is_visible(&self) -> bool {
@@ -28,7 +38,7 @@ impl PanelController {
     }
 
     pub fn focus_gained(&self) {
-        self.suppress_until_focused.store(false, Ordering::SeqCst);
+        self.hide_guard_until_ms.store(0, Ordering::SeqCst);
     }
 
     pub fn begin_tray_hover(&self) {
@@ -42,7 +52,7 @@ impl PanelController {
     pub fn should_hide_on_blur(&self) -> bool {
         self.is_visible()
             && !self.tray_hover.load(Ordering::SeqCst)
-            && !self.suppress_until_focused.load(Ordering::SeqCst)
+            && now_ms() >= self.hide_guard_until_ms.load(Ordering::SeqCst)
     }
 }
 
@@ -51,26 +61,37 @@ pub fn show(app: &AppHandle) -> Result<(), String> {
         .get_webview_window("main")
         .ok_or_else(|| "main window is missing".to_string())?;
     let controller = app.state::<PanelController>();
-    if controller.is_visible() {
+
+    if controller.is_visible() && window.is_visible().unwrap_or(false) {
+        controller.begin_show();
+        let _ = window.set_focus();
         return Ok(());
     }
 
+    let _ = window.unminimize();
+    let _ = window.set_always_on_top(true);
+    let _ = position_near_tray(app, &window);
     controller.begin_show();
-    position_near_tray(app, &window)?;
-    window.show().map_err(|e| e.to_string())?;
-    window.set_focus().map_err(|e| e.to_string())?;
+
+    if let Err(e) = window.show() {
+        controller.begin_hide();
+        return Err(e.to_string());
+    }
+
+    let _ = window.set_always_on_top(true);
+    let _ = window.set_focus();
     Ok(())
 }
 
 pub fn hide(app: &AppHandle) -> Result<(), String> {
     let controller = app.state::<PanelController>();
-    if !controller.is_visible() {
-        return Ok(());
-    }
-
     controller.begin_hide();
     if let Some(window) = app.get_webview_window("main") {
-        window.hide().map_err(|e| e.to_string())?;
+        let _ = window.set_always_on_top(false);
+        if let Err(e) = window.hide() {
+            controller.begin_show();
+            return Err(e.to_string());
+        }
     }
     Ok(())
 }
@@ -93,12 +114,7 @@ pub fn maybe_hide_if_unfocused(app: &AppHandle) {
         return;
     }
 
-    if let Some(window) = app.get_webview_window("main") {
-        if window.is_focused().unwrap_or(false) {
-            return;
-        }
-        let _ = hide(app);
-    }
+    let _ = hide(app);
 }
 
 pub fn setup_tray(app: &AppHandle) -> Result<(), String> {

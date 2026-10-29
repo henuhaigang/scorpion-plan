@@ -71,17 +71,17 @@ fn load_draft(state: State<DesktopTaskService>) -> Result<String, String> {
 }
 
 fn parse_uuid(raw: &str) -> Result<Uuid, String> {
-    Uuid::parse_str(raw).map_err(|e| e.to_string())
+    Uuid::parse_str(raw).map_err(|e| format!("invalid uuid `{raw}`: {e}"))
 }
 
 fn parse_date(raw: &str) -> Result<NaiveDate, String> {
-    NaiveDate::parse_from_str(raw, "%Y-%m-%d").map_err(|e| e.to_string())
+    NaiveDate::parse_from_str(raw, "%Y-%m-%d").map_err(|e| format!("invalid date `{raw}`: {e}"))
 }
 
 fn parse_time(raw: &str) -> Result<NaiveTime, String> {
     NaiveTime::parse_from_str(raw, "%H:%M")
         .or_else(|_| NaiveTime::parse_from_str(raw, "%H:%M:%S"))
-        .map_err(|e| e.to_string())
+        .map_err(|e| format!("invalid time `{raw}`: {e}"))
 }
 
 fn parse_priority(raw: &str) -> Result<TaskPriority, String> {
@@ -99,6 +99,12 @@ fn list_board(state: State<DesktopTaskService>) -> Result<crate::app::TaskBoard,
 }
 
 #[tauri::command]
+fn list_history(state: State<DesktopTaskService>) -> Result<crate::app::HistoryView, String> {
+    let items = state.list_history().map_err(|e| e.to_string())?;
+    Ok(crate::app::HistoryView { items })
+}
+
+#[tauri::command]
 #[allow(clippy::too_many_arguments)]
 fn create_task(
     state: State<DesktopTaskService>,
@@ -107,20 +113,23 @@ fn create_task(
     title: String,
     date: Option<String>,
     time: Option<String>,
-    all_day: bool,
-    priority: String,
+    all_day: Option<bool>,
+    priority: Option<String>,
     category_id: Option<String>,
 ) -> Result<Task, String> {
     let mut cmd = CreateTaskCommand::quick_add(parse_uuid(&id)?, title);
-    if let Some(d) = date {
+    if let Some(d) = date.filter(|value| !value.trim().is_empty()) {
         cmd.date = Some(parse_date(&d)?);
     }
-    if let Some(t) = time {
+    if let Some(t) = time.filter(|value| !value.trim().is_empty()) {
         cmd.time = Some(parse_time(&t)?);
     }
-    cmd.all_day = all_day;
-    cmd.priority = parse_priority(&priority)?;
-    if let Some(c) = category_id {
+    cmd.all_day = all_day.unwrap_or(false);
+    cmd.priority = match priority {
+        Some(value) if !value.trim().is_empty() => parse_priority(&value)?,
+        _ => TaskPriority::Normal,
+    };
+    if let Some(c) = category_id.filter(|value| !value.trim().is_empty()) {
         cmd.category_id = Some(parse_uuid(&c)?);
     }
     let task = state.create_task(cmd).map_err(|e| e.to_string())?;
@@ -164,9 +173,12 @@ fn reschedule_task(
     // Some("HH:MM") = set a specific time.
     let new_time = match time.as_deref() {
         None => None,
-        Some("") => Some(None),
+        Some(value) if value.trim().is_empty() => Some(None),
         Some(t) => Some(Some(parse_time(t)?)),
     };
+    if date.trim().is_empty() {
+        return Err("date is required".to_string());
+    }
     let task = state
         .reschedule_task(
             parse_uuid(&id)?,
@@ -334,6 +346,157 @@ pub fn run() {
                 let _ = poll_service.poll_due();
             });
 
+           if std::env::var_os("DAYFLOW_SELF_TEST").is_some() {
+                let handle = app.handle().clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(std::time::Duration::from_secs(3));
+                    let report = if let Some(window) = handle.get_webview_window("main") {
+                        let script = r#"
+                           window.__dayflowSelfTestResult = '';
+                           (async () => {
+                             const result = { ok: false, steps: [] };
+                             const invoke = window.__TAURI_INTERNALS__.invoke;
+                             const step = async (name, fn) => {
+                               try {
+                                 const value = await fn();
+                                 result.steps.push({ name, ok: true, value });
+                                 return value;
+                               } catch (error) {
+                                 result.steps.push({
+                                   name,
+                                   ok: false,
+                                   error: {
+                                     name: error && error.name,
+                                     message: error && error.message,
+                                     stack: error && error.stack
+                                   }
+                                 });
+                                 throw error;
+                               }
+                             };
+                             const probeWindow = async () => {
+                               try {
+                                 const label = window.__TAURI_INTERNALS__.metadata.currentWindow.label;
+                                 return {
+                                   label,
+                                   visible: await invoke('plugin:window|is_visible', { label }),
+                                   focused: await invoke('plugin:window|is_focused', { label }),
+                                   alwaysOnTop: await invoke('plugin:window|is_always_on_top', { label }),
+                                   position: await invoke('plugin:window|outer_position', { label }),
+                                   size: await invoke('plugin:window|outer_size', { label })
+                                 };
+                               } catch (error) {
+                                 return { error: String(error) };
+                               }
+                             };
+                             try {
+                               result.panelBefore = await step('panel_state_before', () => invoke('panel_state'));
+                               await step('panel_show', () => invoke('panel_show'));
+                               await new Promise((resolve) => setTimeout(resolve, 750));
+                               result.panelAfterShow = await step('panel_state_after_show', () => invoke('panel_state'));
+                               result.windowAfterShow = await probeWindow();
+                               const id = crypto.randomUUID();
+                               const created = await step('create_task_with_time', () => invoke('create_task', {
+                                 id,
+                                 title: 'self-test',
+                                 date: '2026-10-29',
+                                 time: '09:00',
+                                 allDay: false,
+                                 priority: 'NORMAL'
+                               }));
+                               const createdNoTime = await step('create_task_without_time', () => invoke('create_task', {
+                                 id: crypto.randomUUID(),
+                                 title: 'self-test-no-time',
+                                 date: '2026-10-29',
+                                 allDay: false,
+                                 priority: 'NORMAL'
+                               }));
+                               const createdAllDay = await step('create_task_all_day', () => invoke('create_task', {
+                                 id: crypto.randomUUID(),
+                                 title: 'self-test-allday',
+                                 date: '2026-10-29',
+                                 allDay: true
+                               }));
+                               const updated = await step('update_task', () => invoke('update_task', {
+                                 id: created.id,
+                                 expectedVersion: created.version,
+                                 title: 'self-test-updated'
+                               }));
+                               const cleared = await step('reschedule_clear_time', () => invoke('reschedule_task', {
+                                 id: updated.id,
+                                 expectedVersion: updated.version,
+                                 date: '2026-10-30',
+                                 time: ''
+                               }));
+                               const timed = await step('reschedule_set_time', () => invoke('reschedule_task', {
+                                 id: cleared.id,
+                                 expectedVersion: cleared.version,
+                                 date: '2026-10-30',
+                                 time: '10:00'
+                               }));
+                               const board = await step('list_board', () => invoke('list_board'));
+                               result.boardTimedCount = board.today.timed.length;
+                               await step('soft_delete_created', () => invoke('soft_delete_task', {
+                                 id: timed.id,
+                                 expectedVersion: timed.version
+                               }));
+                               await step('soft_delete_created_no_time', () => invoke('soft_delete_task', {
+                                 id: createdNoTime.id,
+                                 expectedVersion: createdNoTime.version
+                               }));
+                               await step('soft_delete_created_all_day', () => invoke('soft_delete_task', {
+                                 id: createdAllDay.id,
+                                 expectedVersion: createdAllDay.version
+                               }));
+                               await step('panel_hide', () => invoke('panel_hide'));
+                               await new Promise((resolve) => setTimeout(resolve, 250));
+                               result.panelAfterHide = await step('panel_state_after_hide', () => invoke('panel_state'));
+                               result.windowAfterHide = await probeWindow();
+                               result.ok = true;
+                             } catch (error) {
+                               result.ok = false;
+                               result.fatal = {
+                                 name: error && error.name,
+                                 message: error && error.message,
+                                 stack: error && error.stack
+                               };
+                             }
+                             window.__dayflowSelfTestResult = JSON.stringify(result);
+                           })();
+                         "#;
+                        let eval_result = window.eval(script);
+                        let mut result_value = String::new();
+                        for _ in 0..40 {
+                            std::thread::sleep(std::time::Duration::from_millis(500));
+                            let (tx, rx) = std::sync::mpsc::channel();
+                            let poll_result = window.eval_with_callback(
+                                "window.__dayflowSelfTestResult || ''",
+                                move |value| {
+                                    let _ = tx.send(value);
+                                },
+                            );
+                            if poll_result.is_err() {
+                                break;
+                            }
+                            if let Ok(value) = rx.recv_timeout(std::time::Duration::from_secs(1))
+                            {
+                                if !value.is_empty() && value != "null" && value != "\"\"" {
+                                    result_value = value;
+                                    break;
+                                }
+                            }
+                        }
+                        format!("eval={eval_result:?} result={result_value}")
+                    } else {
+                        "main window missing".to_string()
+                    };
+                    println!("DAYFLOW_SELF_TEST {report}");
+                    std::thread::sleep(std::time::Duration::from_secs(1));
+                    let _ = panel::hide(&handle);
+                    handle.exit(0);
+                });
+            }
+
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -345,6 +508,7 @@ pub fn run() {
             save_draft,
             load_draft,
             list_board,
+            list_history,
             create_task,
             update_task,
             reschedule_task,
