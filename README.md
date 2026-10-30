@@ -86,8 +86,13 @@ widget setup.
 Desktop and mobile task flows, local SQLite persistence, reminder handling,
 and native widget targets are implemented. Mobile simulator, physical-device,
 widget placement, and packaged desktop behavior still have platform-specific
-verification gaps. Do not treat a source change or a frontend-only test as a
-successful native build. Detailed evidence and remaining risks are in
+verification gaps. Flutter analysis and unit tests pass; Android and iOS
+simulator integration flows pass, including queued widget completion sync.
+The Android launcher now lists and renders the DayFlow widget preview. Direct
+home-screen placement/tapping, iOS home-screen App Intent tapping, and a fresh
+macOS shortcut/outside-click retest remain unverified. Do not treat a source
+change or a frontend-only test as a successful native build. Detailed evidence
+and remaining risks are in
 [docs/V1_RELEASE.md](docs/V1_RELEASE.md) and
 [docs/milestones/M6.md](docs/milestones/M6.md).
 

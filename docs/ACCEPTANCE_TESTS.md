@@ -59,6 +59,10 @@ Agent must convert applicable scenarios into automated tests and maintain a plat
 - Permission granted/denied states are handled.
 - Notifications are best-effort according to OS constraints.
 - Widgets show a useful state and refresh within OS limits.
+- iOS widget completion is queued in the App Group, applied to SQLite on the
+  next synchronization, and removed from the pending queue.
+- Android RemoteViews use only supported view types and render in the launcher
+  widget picker.
 - No claims of unrestricted background execution.
 
 ## Test reporting

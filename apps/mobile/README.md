@@ -41,6 +41,8 @@ The app's **Add home-screen widget** button shows these steps and can republish
 the latest task snapshot. Widget refresh timing is controlled by the OS.
 iOS 17 and later support completing a task from its widget; the completion is
 queued in the App Group and applied to SQLite when DayFlow next becomes active.
+App Group setup completes before synchronization reads queued iOS widget
+completions, so this path also works on the first synchronization after launch.
 Earlier iOS versions open DayFlow when the widget is tapped.
 
 The Android and iOS widgets use the same compact indigo/slate visual language

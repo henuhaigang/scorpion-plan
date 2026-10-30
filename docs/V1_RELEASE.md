@@ -31,12 +31,12 @@
 - Light/dark theme, accessibility
 
 ### Test Results
-- **98 Rust tests**: ALL PASS
-- **22 Frontend tests**: ALL PASS
+- **105 Rust tests**: ALL PASS
+- **23 Frontend tests**: ALL PASS
 - **Format check**: PASS
 - **Lint (ESLint + Clippy)**: PASS
 - **TypeScript typecheck**: PASS
-- **Build**: SUCCESS (DayFlow.app 14.03 MiB, DMG 4.26 MiB)
+- **Build**: SUCCESS (macOS app and DMG packaged)
 
 ### Build Artifacts
 - `apps/desktop/src-tauri/target/release/bundle/macos/DayFlow.app`
@@ -71,9 +71,13 @@ open apps/desktop/src-tauri/target/release/bundle/macos/DayFlow.app
 - The app provides platform-specific setup instructions and a control to refresh widget data.
 
 ### Remaining Verification
-- Add and use widgets through the Android launcher and iOS home screen.
+- Place and tap widgets on Android/iOS home screens. The Android launcher
+  picker and preview render, but home-screen placement and direct checkbox
+  interaction were not completed.
+- Tap the iOS 17+ widget App Intent directly on the home screen.
 - Verify on physical devices and with release-signed builds.
-- Re-run mobile checks in an environment where Flutter and platform simulators are available.
+- Retest packaged macOS shortcut/outside-click behavior with only one DayFlow
+  process running.
 
 ### How to Build
 ```bash
@@ -88,7 +92,7 @@ flutter build apk
 
 1. **Unsigned macOS builds**: Right-click → Open on first launch.
 2. **No auto-update**: Manual download required.
-3. **Mobile widgets require user placement**: The app cannot add a widget to the home screen automatically; launcher placement and physical-device behavior remain unverified.
+3. **Mobile widgets require user placement**: The app cannot add a widget to the home screen automatically; Android picker preview works, but direct placement/tap and iOS home-screen interaction remain unverified.
 4. **Windows/Linux desktop**: NOT RUN (macOS only environment).
 5. **Cloud sync**: Not in V1 (planned for V1.1).
 
@@ -150,3 +154,29 @@ docs/
 - These source changes are pending native verification. Android/iOS builds,
   simulator installation, Rust checks, and packaged macOS blur behavior have
   not been rerun for this follow-up.
+
+## Follow-up: Simulator Regression and Widget Preview Fix (2026-10-31)
+
+- Fixed an iOS first-sync race: `MobileTaskSync` now initializes the Widget
+  App Group before reading pending widget completion IDs.
+- Fixed Android launcher preview inflation: a generic `View` divider was not
+  supported by `RemoteViews`; it is now a `TextView`.
+- `flutter analyze` passed with no issues; `flutter test` passed all 18 tests.
+- Android and iOS integration flows passed for task/widget completion,
+  notification denial, and reminder scheduling/cancellation. The added queued
+  widget completion test passed on both simulators.
+- Android and iOS debug apps rebuilt, installed, and cold-launched on the
+  Pixel 7 emulator (API 34) and iPhone 16 Pro simulator (iOS 18.3).
+- The Android widget picker lists DayFlow and its preview renders correctly.
+  Actual home-screen placement/direct tapping remains unverified.
+- `cargo fmt --check`, `cargo test --locked` (105 tests), strict Clippy, and
+  release build passed. `pnpm --filter dayflow-desktop build:desktop` produced
+  the macOS app and DMG successfully.
+- Existing macOS runtime automation previously verified the shortcut and
+  outside-click behavior. A fresh retest in this session was inconclusive
+  because two DayFlow processes were already running; do not count that attempt
+  as a new runtime pass.
+- Remaining risks: direct iOS App Intent tapping, direct Android widget
+  placement/tapping, physical devices, release signing, and a single-instance
+  macOS runtime retest. Flutter also reports future Kotlin Gradle Plugin and
+  Swift Package Manager compatibility warnings for dependencies.

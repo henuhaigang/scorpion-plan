@@ -61,11 +61,13 @@
             android:textStyle="bold" />
     </LinearLayout>
 
-    <View
+    <TextView
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:layout_marginTop="8dp"
-        android:background="#E9EBF3" />
+        android:background="#E9EBF3"
+        android:importantForAccessibility="no"
+        android:text="" />
 
     <LinearLayout
         android:id="@+id/widget_task_1"

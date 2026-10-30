@@ -26,6 +26,7 @@ class MobileTaskSync {
   }) async {
     String? issue;
     try {
+      await _widgets.initialize();
       await _applyPendingWidgetCompletions();
       final tasks = await _tasks.getActiveTasks();
       if (requestNotificationPermission) {

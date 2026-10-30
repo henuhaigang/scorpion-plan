@@ -3,13 +3,13 @@ use std::sync::atomic::AtomicI32;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
-#[cfg(target_os = "macos")]
-use tauri::{PhysicalPosition, PhysicalSize, WebviewWindow};
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager, WindowEvent,
 };
+#[cfg(target_os = "macos")]
+use tauri::{PhysicalPosition, PhysicalSize, WebviewWindow};
 #[cfg(not(target_os = "macos"))]
 use tauri::{Position, Size, WebviewWindow};
 
@@ -35,11 +35,10 @@ fn now_ms() -> u64 {
 impl PanelController {
     pub fn begin_show(&self) {
         self.visible.store(true, Ordering::SeqCst);
-        self.hide_guard_until_ms
-            .store(
-                now_ms().saturating_add(PANEL_SHOW_GUARD.as_millis() as u64),
-                Ordering::SeqCst,
-            );
+        self.hide_guard_until_ms.store(
+            now_ms().saturating_add(PANEL_SHOW_GUARD.as_millis() as u64),
+            Ordering::SeqCst,
+        );
     }
 
     pub fn begin_hide(&self) {
@@ -311,23 +310,15 @@ fn centered_panel_position(
     window_size: PhysicalSize<u32>,
 ) -> Result<PhysicalPosition<i32>, String> {
     let centered_coordinate = |origin: i32, monitor_extent: u32, window_extent: u32| {
-        let coordinate = i64::from(origin)
-            + (i64::from(monitor_extent) - i64::from(window_extent)) / 2;
+        let coordinate =
+            i64::from(origin) + (i64::from(monitor_extent) - i64::from(window_extent)) / 2;
         i32::try_from(coordinate)
             .map_err(|_| "centered panel position is outside the supported range".to_string())
     };
 
     Ok(PhysicalPosition::new(
-        centered_coordinate(
-            monitor_position.x,
-            monitor_size.width,
-            window_size.width,
-        )?,
-        centered_coordinate(
-            monitor_position.y,
-            monitor_size.height,
-            window_size.height,
-        )?,
+        centered_coordinate(monitor_position.x, monitor_size.width, window_size.width)?,
+        centered_coordinate(monitor_position.y, monitor_size.height, window_size.height)?,
     ))
 }
 

@@ -1,6 +1,10 @@
+import 'dart:convert';
+
 import 'package:dayflow_mobile/src/application/task_service.dart';
 import 'package:dayflow_mobile/src/domain/task.dart';
 import 'package:dayflow_mobile/src/home_page.dart';
+import 'package:dayflow_mobile/src/platform/mobile_reminder_service.dart';
+import 'package:dayflow_mobile/src/platform/mobile_task_sync.dart';
 import 'package:dayflow_mobile/src/platform/task_widget_service.dart';
 import 'package:dayflow_mobile/src/platform/widget_background_callback.dart';
 import 'package:dayflow_mobile/src/repo/task_repository.dart';
@@ -43,6 +47,38 @@ void main() {
     final widgetData = await HomeWidget.getWidgetData<String>('dayFlowTasks');
     expect(widgetData, isNot(contains(title)));
     await service.softDeleteTask(savedTask);
+    await repository.close();
+  });
+
+  testWidgets('sync applies a queued widget completion', (tester) async {
+    final repository = TaskRepository();
+    final service = TaskService(repository);
+    final task = await service.createTask(
+      title: 'queued_widget_${DateTime.now().microsecondsSinceEpoch}',
+      date: service.todayDate(),
+    );
+    final widgets = TaskWidgetService();
+    await widgets.initialize();
+    await HomeWidget.saveWidgetData<String>(
+      'pendingCompletionIds',
+      jsonEncode([task.id]),
+    );
+
+    final issue = await MobileTaskSync(
+      tasks: repository,
+      reminders: MobileReminderService(),
+      widgets: widgets,
+    ).synchronize();
+
+    expect(issue, isNull);
+    final completed = await repository.getTask(task.id);
+    expect(completed?.status, TaskStatus.completed);
+    expect(
+      await HomeWidget.getWidgetData<String>('pendingCompletionIds'),
+      '[]',
+    );
+
+    await service.softDeleteTask(completed!);
     await repository.close();
   });
 }
