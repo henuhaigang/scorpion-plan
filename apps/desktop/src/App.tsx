@@ -31,9 +31,14 @@ interface SectionProps {
 function Section({ id, title, views, empty, busy, handlers }: SectionProps) {
   return (
     <section className="board-section" aria-labelledby={`${id}-title`}>
-      <h2 id={`${id}-title`} className="board-section-title">
-        {title}
-      </h2>
+      <div className="board-section-header">
+        <h2 id={`${id}-title`} className="board-section-title">
+          {title}
+        </h2>
+        <span className="board-section-count" aria-label={`${views.length} 项任务`}>
+          {views.length}
+        </span>
+      </div>
       {views.length === 0 ? (
         <p className="board-empty">{empty}</p>
       ) : (
@@ -234,7 +239,7 @@ export default function App() {
       <header className="panel-header">
         <div>
           <h1 className="panel-title">DayFlow</h1>
-          <p className="panel-subtitle">让重要的事情，主动出现在你面前。</p>
+          <p className="panel-subtitle">今天，轻松安排</p>
         </div>
         <button
           type="button"
@@ -276,6 +281,7 @@ export default function App() {
               <span>时间</span>
               <input
                 type="time"
+                step={60}
                 value={draftTime}
                 onChange={(event) => setDraftTime(event.target.value)}
               />
@@ -318,15 +324,15 @@ export default function App() {
           <div className="board">
             <Section
               id="today-timed"
-              title="今日 · 定时"
+              title="今日"
               views={board.today.timed}
-              empty="今天还没有定时任务。"
+              empty="今天还没有任务。"
               busy={busy}
               handlers={handlers}
             />
             <Section
               id="today-untimed"
-              title="今日 · 待安排"
+              title="待安排"
               views={board.today.untimed}
               empty="今天还没有待安排的任务。"
               busy={busy}
@@ -387,9 +393,11 @@ export default function App() {
         </button>
       </div>
 
-      <p className="panel-status" role="status" aria-live="polite" data-testid="app-status">
-        {statusText}
-      </p>
+      {(error || loading) && (
+        <p className="panel-status" role="status" aria-live="polite" data-testid="app-status">
+          {statusText}
+        </p>
+      )}
     </main>
   );
 }

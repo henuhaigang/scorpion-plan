@@ -196,6 +196,7 @@ export function TaskRow({
               <span>时间</span>
               <input
                 type="time"
+                step={60}
                 value={editTime}
                 onChange={(event) => setEditTime(event.target.value)}
               />

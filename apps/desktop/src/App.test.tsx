@@ -95,9 +95,9 @@ describe("App shell", () => {
     expect(await screen.findByRole("heading", { name: "DayFlow" })).toBeInTheDocument();
   });
 
-  it("shows the product promise", async () => {
+  it("shows the concise daily tagline", async () => {
     render(<App />);
-    expect(await screen.findByText("让重要的事情，主动出现在你面前。")).toBeInTheDocument();
+    expect(await screen.findByText("今天，轻松安排")).toBeInTheDocument();
   });
 
   it("loads the persisted draft", async () => {
@@ -131,8 +131,8 @@ describe("App shell", () => {
 describe("Board rendering", () => {
   it("renders all four sections", async () => {
     render(<App />);
-    expect(await screen.findByRole("heading", { name: "今日 · 定时" })).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "今日 · 待安排" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "今日" })).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: "待安排" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "遗留" })).toBeInTheDocument();
     expect(screen.getByRole("heading", { name: "未来" })).toBeInTheDocument();
   });
@@ -145,7 +145,7 @@ describe("Board rendering", () => {
 
   it("shows an empty state for an empty section", async () => {
     render(<App />);
-    expect(await screen.findByText("今天还没有定时任务。")).toBeInTheDocument();
+    expect(await screen.findByText("今天还没有任务。")).toBeInTheDocument();
   });
 
   it("shows an overdue badge for overdue tasks", async () => {
@@ -204,6 +204,25 @@ describe("Quick add", () => {
             /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
           ),
         })
+      );
+    });
+  });
+
+  it("creates a timed task with a valid minute-precision value", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByTestId("add-btn"));
+    fireEvent.change(await screen.findByTestId("draft-input"), {
+      target: { value: "定时任务" },
+    });
+    const timeInput = screen.getByLabelText("时间");
+    expect(timeInput).toHaveAttribute("step", "60");
+    fireEvent.change(timeInput, { target: { value: "09:30" } });
+    fireEvent.click(screen.getByRole("button", { name: "添加" }));
+
+    await waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith(
+        "create_task",
+        expect.objectContaining({ title: "定时任务", time: "09:30" })
       );
     });
   });
@@ -325,6 +344,37 @@ describe("Edit (combined form)", () => {
           expectedVersion: 1,
           date: "2026-11-02",
           time: "09:00",
+        })
+      );
+    });
+  });
+
+  it("updates the time through the edit form", async () => {
+    board = boardWith([
+      makeView(
+        makeTask({
+          id: "t-1",
+          current_schedule: { date: "2026-10-26", time: "09:00:00", all_day: false },
+        })
+      ),
+    ]);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "编辑" }));
+
+    const row = screen.getByTestId("row-t-1");
+    const timeInput = within(row).getByLabelText("时间");
+    expect(timeInput).toHaveAttribute("step", "60");
+    fireEvent.change(timeInput, { target: { value: "10:45" } });
+    fireEvent.click(within(row).getByRole("button", { name: "保存" }));
+
+    await waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith(
+        "reschedule_task",
+        expect.objectContaining({
+          id: "t-1",
+          expectedVersion: 1,
+          date: "2026-10-26",
+          time: "10:45",
         })
       );
     });

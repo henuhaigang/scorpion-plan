@@ -79,8 +79,9 @@ fn parse_date(raw: &str) -> Result<NaiveDate, String> {
 }
 
 fn parse_time(raw: &str) -> Result<NaiveTime, String> {
-    NaiveTime::parse_from_str(raw, "%H:%M")
-        .or_else(|_| NaiveTime::parse_from_str(raw, "%H:%M:%S"))
+    let value = raw.trim();
+    NaiveTime::parse_from_str(value, "%H:%M")
+        .or_else(|_| NaiveTime::parse_from_str(value, "%H:%M:%S"))
         .map_err(|e| format!("invalid time `{raw}`: {e}"))
 }
 
@@ -301,7 +302,37 @@ fn set_global_reminder_default(
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
+        .plugin(
+            tauri_plugin_global_shortcut::Builder::new()
+                .with_handler(|app, _shortcut, event| {
+                    if event.state == tauri_plugin_global_shortcut::ShortcutState::Pressed {
+                        let _ = panel::toggle(app);
+                    }
+                })
+                .build(),
+        )
         .setup(|app| {
+            #[cfg(target_os = "macos")]
+            {
+                use objc2::MainThreadMarker;
+                use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy};
+                use tauri_plugin_global_shortcut::GlobalShortcutExt;
+
+                let main_thread = MainThreadMarker::new().ok_or_else(|| {
+                    std::io::Error::other("macOS application setup must run on the main thread")
+                })?;
+                let native_app = NSApplication::sharedApplication(main_thread);
+                if !native_app.setActivationPolicy(NSApplicationActivationPolicy::Accessory) {
+                    return Err(std::io::Error::other(
+                        "could not set macOS accessory activation policy",
+                    )
+                    .into());
+                }
+
+                app.global_shortcut()
+                    .register("CommandOrControl+Shift+Space")?;
+            }
+
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
             let db_path = data_dir.join("dayflow.sqlite");
@@ -350,6 +381,11 @@ pub fn run() {
                 let handle = app.handle().clone();
                 std::thread::spawn(move || {
                     std::thread::sleep(std::time::Duration::from_secs(3));
+                    let hold_ms = std::env::var("DAYFLOW_SELF_TEST_HOLD_MS")
+                        .ok()
+                        .and_then(|value| value.parse::<u64>().ok())
+                        .unwrap_or_default()
+                        .to_string();
                     let report = if let Some(window) = handle.get_webview_window("main") {
                         let script = r#"
                            window.__dayflowSelfTestResult = '';
@@ -392,6 +428,7 @@ pub fn run() {
                              try {
                                result.panelBefore = await step('panel_state_before', () => invoke('panel_state'));
                                await step('panel_show', () => invoke('panel_show'));
+                               await new Promise((resolve) => setTimeout(resolve, __HOLD_MS__));
                                await new Promise((resolve) => setTimeout(resolve, 750));
                                result.panelAfterShow = await step('panel_state_after_show', () => invoke('panel_state'));
                                result.windowAfterShow = await probeWindow();
@@ -463,7 +500,8 @@ pub fn run() {
                              }
                              window.__dayflowSelfTestResult = JSON.stringify(result);
                            })();
-                         "#;
+                         "#
+                        .replace("__HOLD_MS__", &hold_ms);
                         let eval_result = window.eval(script);
                         let mut result_value = String::new();
                         for _ in 0..40 {
@@ -523,4 +561,28 @@ pub fn run() {
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
+}
+
+#[cfg(test)]
+mod tests {
+    use super::parse_time;
+    use chrono::NaiveTime;
+
+    #[test]
+    fn parses_time_input_values_with_or_without_seconds() {
+        assert_eq!(
+            parse_time("09:30").unwrap(),
+            NaiveTime::from_hms_opt(9, 30, 0).unwrap()
+        );
+        assert_eq!(
+            parse_time(" 09:30:15 ").unwrap(),
+            NaiveTime::from_hms_opt(9, 30, 15).unwrap()
+        );
+    }
+
+    #[test]
+    fn rejects_invalid_time_input_values() {
+        assert!(parse_time("25:30").is_err());
+        assert!(parse_time("not a time").is_err());
+    }
 }

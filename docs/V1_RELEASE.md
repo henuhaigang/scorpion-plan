@@ -14,7 +14,7 @@
 | M3 | Task management UI | COMPLETE |
 | M4 | Reminder engine | COMPLETE |
 | M5 | Release hardening | COMPLETE |
-| M6 | Mobile app (Flutter) | PARTIAL (build NOT RUN) |
+| M6 | Mobile app (Flutter) | PARTIAL — widget placement and physical-device verification remain |
 | M7 | Cloud sync | OUT OF SCOPE (V1.1+) |
 
 ## Desktop (macOS) — COMPLETE
@@ -65,27 +65,22 @@ open apps/desktop/src-tauri/target/release/bundle/macos/DayFlow.app
 
 ## Mobile (iOS/Android) — PARTIAL
 
-### What's Done
-- Flutter project structure
-- Task domain model (matching desktop)
-- SQLite repository with optimistic versioning
-- Basic UI (HomePage, TaskList, quick-add dialog)
-- 3 unit tests for Task model
+### Implemented
+- Local task flows, SQLite persistence, best-effort reminders, and native Android/iOS widget extensions.
+- The app publishes task snapshots; widgets must be added manually through the OS widget gallery.
+- The app provides platform-specific setup instructions and a control to refresh widget data.
 
-### What's Missing
-- Flutter SDK not available: build NOT RUN
-- Platform folders (ios/, android/) not generated
-- Notification scheduling not implemented
-- Home screen widgets not implemented
-- No runtime verification on iOS or Android
+### Remaining Verification
+- Add and use widgets through the Android launcher and iOS home screen.
+- Verify on physical devices and with release-signed builds.
+- Re-run mobile checks in an environment where Flutter and platform simulators are available.
 
-### How to Complete (when Flutter is available)
+### How to Build
 ```bash
 cd apps/mobile
-flutter create .
 flutter pub get
 flutter test
-flutter build ios --simulator
+flutter build ios --simulator --no-codesign
 flutter build apk
 ```
 
@@ -93,7 +88,7 @@ flutter build apk
 
 1. **Unsigned macOS builds**: Right-click → Open on first launch.
 2. **No auto-update**: Manual download required.
-3. **Mobile not verified**: Code written but not compiled/tested.
+3. **Mobile widgets require user placement**: The app cannot add a widget to the home screen automatically; launcher placement and physical-device behavior remain unverified.
 4. **Windows/Linux desktop**: NOT RUN (macOS only environment).
 5. **Cloud sync**: Not in V1 (planned for V1.1).
 
@@ -141,3 +136,17 @@ docs/
 4. Conflict resolution and tombstone propagation
 5. Auto-update (after security review)
 6. Windows/Linux desktop verification
+
+## Follow-up: Android Startup, Mobile UI, and macOS Dismissal (2026-10-30)
+
+- The Android app module now applies its Kotlin Gradle plugin explicitly and
+  shares concurrent startup SQLite opens between initial rendering and
+  widget/reminder synchronization.
+- The Flutter task board and both native widget surfaces now share a compact
+  indigo/slate visual treatment with explicit untimed-task labels.
+- macOS outside-click blur rechecks no longer wait a fixed 800 ms after the
+  click; they are scheduled after the short panel-show guard. Runtime behavior
+  remains to be verified.
+- These source changes are pending native verification. Android/iOS builds,
+  simulator installation, Rust checks, and packaged macOS blur behavior have
+  not been rerun for this follow-up.
