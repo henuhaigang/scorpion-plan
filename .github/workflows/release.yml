@@ -152,12 +152,17 @@ jobs:
         run: pnpm test
       - name: Build Windows installers
         run: pnpm --filter dayflow-desktop exec tauri build --bundles msi,nsis
+      - name: Stage Windows installers
+        shell: pwsh
+        run: |
+          $assets = Join-Path $env:RUNNER_TEMP "release-assets"
+          New-Item -ItemType Directory -Force -Path $assets | Out-Null
+          Copy-Item "apps/desktop/src-tauri/target/release/bundle/msi/*.msi" $assets
+          Copy-Item "apps/desktop/src-tauri/target/release/bundle/nsis/*.exe" $assets
       - uses: actions/upload-artifact@v4
         with:
           name: client-windows
-          path: |
-            apps/desktop/src-tauri/target/release/bundle/msi/*.msi
-            apps/desktop/src-tauri/target/release/bundle/nsis/*.exe
+          path: ${{ runner.temp }}/release-assets/*
           if-no-files-found: error
           retention-days: 30
 
