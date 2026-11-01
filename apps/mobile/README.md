@@ -35,7 +35,9 @@ automatically. Open DayFlow once, then:
 - **iOS:** Long-press an empty area of the home screen, choose **Edit** >
   **Add Widget**, search for **DayFlow**, choose a size, and add it.
 - **Android:** Long-press an empty area of the home screen, open **Widgets**,
-  find **DayFlow**, then drag its widget onto the home screen.
+  find **DayFlow**, then drag its widget onto the home screen. After placing
+  it, long-press the widget and drag its resize handles; smaller heights show
+  fewer task rows, while larger sizes reveal more rows and the legacy summary.
 
 The app's **Add home-screen widget** button shows these steps and can republish
 the latest task snapshot. Widget refresh timing is controlled by the OS.
@@ -48,3 +50,11 @@ Earlier iOS versions open DayFlow when the widget is tapped.
 The Android and iOS widgets use the same compact indigo/slate visual language
 as the mobile app. The OS controls widget sizing, refresh timing, and home
 screen placement.
+
+## Latest simulator verification
+
+On 2026-11-01, `flutter analyze` reported no issues and all 18 `flutter test`
+tests passed. The app was rebuilt, installed, and launched on the Android
+emulator (`emulator-5554`) and iPhone 16 Pro simulator
+(`EEB96DB5-39B8-4B91-A3CB-1FCB196CDF88`). Directly placing/tapping the widgets
+on the simulator home screens is still a separate, unverified OS interaction.

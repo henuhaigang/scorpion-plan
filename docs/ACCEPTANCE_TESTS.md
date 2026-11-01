@@ -45,7 +45,11 @@ Agent must convert applicable scenarios into automated tests and maintain a plat
 
 ## Desktop
 - Tray/menu-bar click shows/hides panel.
-- Blur/outside click hides without quitting.
+- Mouse leaving the tray/menu-bar icon does not hide the panel.
+- A click outside the panel hides it without quitting, including a blank
+  desktop click when no other app window receives focus.
+- Clicking panel controls, including opening history and returning to tasks,
+  does not hide the panel.
 - Rapid repeated tray clicks do not produce incorrect visibility.
 - Hiding preserves draft.
 - Escape hides panel unless a dialog handles it.
@@ -63,6 +67,8 @@ Agent must convert applicable scenarios into automated tests and maintain a plat
   next synchronization, and removed from the pending queue.
 - Android RemoteViews use only supported view types and render in the launcher
   widget picker.
+- Android home-screen widgets can be resized in the launcher; visible task rows
+  and the legacy summary adapt to the selected height.
 - No claims of unrestricted background execution.
 
 ## Test reporting

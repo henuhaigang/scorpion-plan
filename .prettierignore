@@ -3,6 +3,8 @@ dist
 target
 coverage
 pnpm-lock.yaml
+apps/mobile/.dart_tool/
+apps/mobile/ios/Pods/
 apps/desktop/src-tauri/gen
 apps/desktop/src-tauri/icons
 *.lock

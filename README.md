@@ -81,18 +81,27 @@ long-press the home screen and select DayFlow from the widget gallery. See
 [apps/mobile/README.md](apps/mobile/README.md) for platform behavior and
 widget setup.
 
+## Main-branch releases
+
+Pushing to `main` runs [Client releases](.github/workflows/release.yml). After
+all platform builds and tests pass, it publishes a commit-specific GitHub
+prerelease containing macOS DMG, Windows MSI/NSIS, Android APK/AAB, and an
+iOS Simulator debug archive. The iOS archive is not installable on physical
+iPhones; Android packages are unsigned until the four signing secrets described
+in [docs/V1_RELEASE.md](docs/V1_RELEASE.md) are configured. Desktop packages
+are unsigned.
+
 ## Current status
 
 Desktop and mobile task flows, local SQLite persistence, reminder handling,
-and native widget targets are implemented. Mobile simulator, physical-device,
-widget placement, and packaged desktop behavior still have platform-specific
-verification gaps. Flutter analysis and unit tests pass; Android and iOS
-simulator integration flows pass, including queued widget completion sync.
-The Android launcher now lists and renders the DayFlow widget preview. Direct
-home-screen placement/tapping, iOS home-screen App Intent tapping, and a fresh
-macOS shortcut/outside-click retest remain unverified. Do not treat a source
-change or a frontend-only test as a successful native build. Detailed evidence
-and remaining risks are in
+and native widget targets are implemented. Flutter analysis and unit tests
+pass; Android and iOS apps install and launch on their simulators. The macOS
+app is installed in `~/Applications/DayFlow.app`; the `⌘⇧Space` shortcut,
+panel persistence while moving the pointer away from the menu bar, and
+single-click outside dismissal were verified against the packaged app. Direct
+Android/iOS home-screen widget placement/tapping and physical-device behavior
+remain unverified. Do not treat a source change or frontend-only test as a
+successful native build. Detailed evidence and remaining risks are in
 [docs/V1_RELEASE.md](docs/V1_RELEASE.md) and
 [docs/milestones/M6.md](docs/milestones/M6.md).
 

@@ -4,14 +4,40 @@ import android.appwidget.AppWidgetManager
 import android.content.Context
 import android.content.SharedPreferences
 import android.net.Uri
+import android.os.Bundle
 import android.widget.RemoteViews
 import es.antonborri.home_widget.HomeWidgetBackgroundIntent
 import es.antonborri.home_widget.HomeWidgetLaunchIntent
+import es.antonborri.home_widget.HomeWidgetPlugin
 import es.antonborri.home_widget.HomeWidgetProvider
 import org.json.JSONObject
 
 class DayFlowWidgetProvider : HomeWidgetProvider() {
     override fun onUpdate(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetIds: IntArray,
+        widgetData: SharedPreferences,
+    ) {
+        updateWidgets(context, appWidgetManager, appWidgetIds, widgetData)
+    }
+
+    override fun onAppWidgetOptionsChanged(
+        context: Context,
+        appWidgetManager: AppWidgetManager,
+        appWidgetId: Int,
+        newOptions: Bundle,
+    ) {
+        super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+        updateWidgets(
+            context,
+            appWidgetManager,
+            intArrayOf(appWidgetId),
+            HomeWidgetPlugin.getData(context),
+        )
+    }
+
+    private fun updateWidgets(
         context: Context,
         appWidgetManager: AppWidgetManager,
         appWidgetIds: IntArray,
@@ -26,6 +52,25 @@ class DayFlowWidgetProvider : HomeWidgetProvider() {
 
         appWidgetIds.forEach { widgetId ->
             val views = RemoteViews(context.packageName, R.layout.dayflow_widget)
+            val heightDp = appWidgetManager
+                .getAppWidgetOptions(widgetId)
+                .getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 260)
+            val visibleTaskCount = when {
+                heightDp < 160 -> 1
+                heightDp < 205 -> 2
+                heightDp < 250 -> 3
+                else -> 4
+            }
+            val showLegacy = heightDp >= 220
+
+            views.setViewVisibility(
+                R.id.widget_subtitle,
+                if (heightDp < 160) android.view.View.GONE else android.view.View.VISIBLE,
+            )
+            views.setViewVisibility(
+                R.id.widget_legacy_container,
+                if (showLegacy) android.view.View.VISIBLE else android.view.View.GONE,
+            )
             views.setTextViewText(
                 R.id.widget_legacy_count,
                 "之前未完成 · $legacyCount",
@@ -48,7 +93,7 @@ class DayFlowWidgetProvider : HomeWidgetProvider() {
             )
             rowIds.forEachIndexed { index, (rowId, titleId, timeId) ->
                 val task = today?.optJSONObject(index)
-                if (task == null) {
+                if (task == null || index >= visibleTaskCount) {
                     views.setViewVisibility(rowId, android.view.View.GONE)
                 } else {
                     views.setViewVisibility(rowId, android.view.View.VISIBLE)

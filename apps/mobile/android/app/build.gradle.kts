@@ -5,6 +5,17 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val releaseSigningValues = listOf(
+    providers.environmentVariable("ANDROID_KEYSTORE_PATH").orNull,
+    providers.environmentVariable("ANDROID_STORE_PASSWORD").orNull,
+    providers.environmentVariable("ANDROID_KEY_ALIAS").orNull,
+    providers.environmentVariable("ANDROID_KEY_PASSWORD").orNull,
+)
+val hasReleaseSigning = releaseSigningValues.all { !it.isNullOrBlank() }
+if (releaseSigningValues.any { !it.isNullOrBlank() } && !hasReleaseSigning) {
+    error("Android release signing requires all four ANDROID_* signing environment variables.")
+}
+
 android {
     namespace = "com.dayflow.dayflow_mobile"
     compileSdk = flutter.compileSdkVersion
@@ -31,11 +42,22 @@ android {
         versionName = flutter.versionName
     }
 
+    signingConfigs {
+        if (hasReleaseSigning) {
+            create("release") {
+                storeFile = rootProject.file(requireNotNull(releaseSigningValues[0]))
+                storePassword = requireNotNull(releaseSigningValues[1])
+                keyAlias = requireNotNull(releaseSigningValues[2])
+                keyPassword = requireNotNull(releaseSigningValues[3])
+            }
+        }
+    }
+
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            if (hasReleaseSigning) {
+                signingConfig = signingConfigs.getByName("release")
+            }
         }
     }
 }

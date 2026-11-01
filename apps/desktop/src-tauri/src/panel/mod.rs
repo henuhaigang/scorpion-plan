@@ -3,6 +3,9 @@ use std::sync::atomic::AtomicI32;
 use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
 use std::time::{Duration, SystemTime, UNIX_EPOCH};
 
+#[cfg(target_os = "macos")]
+use std::cell::RefCell;
+
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
@@ -14,7 +17,14 @@ use tauri::{PhysicalPosition, PhysicalSize, WebviewWindow};
 use tauri::{Position, Size, WebviewWindow};
 
 const PANEL_SHOW_GUARD: Duration = Duration::from_millis(150);
+#[cfg(any(test, not(target_os = "macos")))]
 const BLUR_CHECK_INTERVAL: Duration = Duration::from_millis(40);
+
+#[cfg(target_os = "macos")]
+thread_local! {
+    static CLICK_AWAY_MONITOR: RefCell<Option<objc2::rc::Retained<objc2::runtime::AnyObject>>> =
+        const { RefCell::new(None) };
+}
 
 #[derive(Debug, Default)]
 pub struct PanelController {
@@ -70,6 +80,10 @@ impl PanelController {
             self.hide_guard_until_ms.load(Ordering::SeqCst),
         )
     }
+
+    pub fn should_hide_on_outside_click(&self) -> bool {
+        self.is_visible() && !self.tray_hover.load(Ordering::SeqCst)
+    }
 }
 
 fn should_hide_on_blur_state(
@@ -81,6 +95,7 @@ fn should_hide_on_blur_state(
     visible && !tray_hover && now >= hide_guard_until_ms
 }
 
+#[cfg(any(test, not(target_os = "macos")))]
 fn blur_check_delay_ms(now: u64, hide_guard_until_ms: u64) -> u64 {
     hide_guard_until_ms
         .saturating_sub(now)
@@ -188,6 +203,7 @@ pub fn maybe_hide_if_unfocused(app: &AppHandle) {
     let _ = hide(app);
 }
 
+#[cfg(not(target_os = "macos"))]
 fn hide_after_blur_event(app: &AppHandle) {
     let controller = app.state::<PanelController>();
     if !controller.is_visible() {
@@ -248,7 +264,6 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), String> {
             }
             TrayIconEvent::Leave { .. } => {
                 handle.state::<PanelController>().end_tray_hover();
-                maybe_hide_if_unfocused(&handle);
             }
             TrayIconEvent::Click {
                 button,
@@ -274,6 +289,7 @@ pub fn setup_window_events(app: &AppHandle) -> Result<(), String> {
         WindowEvent::Focused(true) => {
             handle.state::<PanelController>().focus_gained();
         }
+        #[cfg(not(target_os = "macos"))]
         WindowEvent::Focused(false) => hide_after_blur_event(&handle),
         WindowEvent::CloseRequested { api, .. } => {
             let _ = hide(&handle);
@@ -283,6 +299,66 @@ pub fn setup_window_events(app: &AppHandle) -> Result<(), String> {
     });
 
     Ok(())
+}
+
+#[cfg(target_os = "macos")]
+pub fn setup_click_away_monitor(app: &AppHandle) -> Result<(), String> {
+    use block2::RcBlock;
+    use objc2::MainThreadMarker;
+    use objc2_app_kit::{NSEvent, NSEventMask};
+
+    if MainThreadMarker::new().is_none() {
+        return Err("click-away monitor must be registered on the main thread".into());
+    }
+
+    let app = app.clone();
+    let handler = RcBlock::new(move |_event: std::ptr::NonNull<NSEvent>| {
+        let app = app.clone();
+        let dispatch_app = app.clone();
+        if let Err(error) = app.run_on_main_thread(move || {
+            if dispatch_app
+                .state::<PanelController>()
+                .should_hide_on_outside_click()
+            {
+                let Some(window) = dispatch_app.get_webview_window("main") else {
+                    return;
+                };
+                match pointer_is_inside_panel(&window) {
+                    Ok(true) => return,
+                    Ok(false) => {}
+                    Err(error) => {
+                        eprintln!("failed to determine click position: {error}");
+                        return;
+                    }
+                }
+                if let Err(error) = hide(&dispatch_app) {
+                    eprintln!("failed to hide panel after outside click: {error}");
+                }
+            }
+        }) {
+            eprintln!("failed to schedule outside-click dismissal: {error}");
+        }
+    });
+
+    let monitor = NSEvent::addGlobalMonitorForEventsMatchingMask_handler(
+        NSEventMask::LeftMouseDown | NSEventMask::RightMouseDown | NSEventMask::OtherMouseDown,
+        &handler,
+    )
+    .ok_or_else(|| "could not register macOS outside-click monitor".to_string())?;
+
+    CLICK_AWAY_MONITOR.with(|current| {
+        *current.borrow_mut() = Some(monitor);
+    });
+    Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn pointer_is_inside_panel(window: &WebviewWindow) -> Result<bool, String> {
+    let position = window
+        .cursor_position()
+        .map_err(|error| error.to_string())?;
+    let size = window.inner_size().map_err(|error| error.to_string())?;
+    Ok(point_is_inside_panel(position, size))
 }
 
 #[cfg(target_os = "macos")]
@@ -442,6 +518,14 @@ fn position_near_tray(app: &AppHandle, window: &WebviewWindow) -> Result<(), Str
         .map_err(|e| e.to_string())
 }
 
+#[cfg(target_os = "macos")]
+fn point_is_inside_panel(position: PhysicalPosition<f64>, size: PhysicalSize<u32>) -> bool {
+    position.x >= 0.0
+        && position.y >= 0.0
+        && position.x < size.width as f64
+        && position.y < size.height as f64
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -513,6 +597,56 @@ mod tests {
 
         controller.end_tray_hover();
         assert!(controller.should_hide_on_blur());
+    }
+
+    #[test]
+    fn leaving_tray_hover_does_not_change_panel_visibility() {
+        let controller = PanelController::default();
+        controller.begin_show();
+        controller.focus_gained();
+        controller.begin_tray_hover();
+
+        controller.end_tray_hover();
+
+        assert!(controller.is_visible());
+        assert!(controller.should_hide_on_blur());
+    }
+
+    #[test]
+    fn outside_click_dismissal_is_suppressed_while_pointer_is_on_tray() {
+        let controller = PanelController::default();
+        controller.begin_show();
+
+        assert!(controller.should_hide_on_outside_click());
+
+        controller.begin_tray_hover();
+        assert!(!controller.should_hide_on_outside_click());
+
+        controller.end_tray_hover();
+        assert!(controller.should_hide_on_outside_click());
+    }
+
+    #[cfg(target_os = "macos")]
+    #[test]
+    fn panel_click_positions_are_not_outside_clicks() {
+        let size = PhysicalSize::new(360, 480);
+
+        assert!(point_is_inside_panel(
+            PhysicalPosition::new(10.0, 10.0),
+            size
+        ));
+        assert!(point_is_inside_panel(
+            PhysicalPosition::new(359.0, 479.0),
+            size
+        ));
+        assert!(!point_is_inside_panel(
+            PhysicalPosition::new(-1.0, 10.0),
+            size
+        ));
+        assert!(!point_is_inside_panel(
+            PhysicalPosition::new(360.0, 480.0),
+            size
+        ));
     }
 
     #[test]

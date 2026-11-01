@@ -363,6 +363,8 @@ pub fn run() {
 
             panel::setup_tray(app.handle())?;
             panel::setup_window_events(app.handle())?;
+            #[cfg(target_os = "macos")]
+            panel::setup_click_away_monitor(app.handle())?;
 
             // Startup reconciliation: sync reminder jobs with task state.
             let rs = reminder_service.clone();

@@ -1,6 +1,6 @@
 # DayFlow V1.0 Release Summary
 
-## Date: 2026-10-28
+## Date: 2026-11-01
 
 ## Status: DESKTOP COMPLETE, MOBILE PARTIAL
 
@@ -31,7 +31,7 @@
 - Light/dark theme, accessibility
 
 ### Test Results
-- **105 Rust tests**: ALL PASS
+- **107 Rust tests**: ALL PASS
 - **23 Frontend tests**: ALL PASS
 - **Format check**: PASS
 - **Lint (ESLint + Clippy)**: PASS
@@ -76,8 +76,6 @@ open apps/desktop/src-tauri/target/release/bundle/macos/DayFlow.app
   interaction were not completed.
 - Tap the iOS 17+ widget App Intent directly on the home screen.
 - Verify on physical devices and with release-signed builds.
-- Retest packaged macOS shortcut/outside-click behavior with only one DayFlow
-  process running.
 
 ### How to Build
 ```bash
@@ -180,3 +178,38 @@ docs/
   placement/tapping, physical devices, release signing, and a single-instance
   macOS runtime retest. Flutter also reports future Kotlin Gradle Plugin and
   Swift Package Manager compatibility warnings for dependencies.
+
+## Follow-up: macOS Outside-Click Dismissal and Local Install (2026-11-01)
+
+- Removed tray-leave dismissal and macOS blur-only dismissal. The non-activating
+  panel now hides on outside mouse-down events; the click is not consumed.
+- The click-away monitor ignores clicks while the pointer is over the tray so
+  the normal tray click remains a toggle.
+- `cargo fmt --check`, all 107 Rust tests, and strict Clippy passed. The Tauri
+  release app and DMG built successfully.
+- Installed the ad-hoc-signed release app at `~/Applications/DayFlow.app`.
+  Packaged runtime checks verified `⌘⇧Space` opens the centered panel, moving
+  the pointer away from the menu-bar corner keeps it open, and one external
+  click hides it while DayFlow continues running.
+- Android (`emulator-5554`) and iOS (iPhone 16 Pro simulator) apps were
+  rebuilt, installed, and launched. `flutter analyze` and all 18 Flutter unit
+  tests passed.
+- Remaining: direct widget placement/tapping on both home screens, physical
+  device/release-signing verification, and cross-platform desktop behavior.
+
+## Main-Branch Client Release Workflow
+
+- `.github/workflows/release.yml` builds and publishes a GitHub prerelease for
+  each push to `main`. It packages a macOS DMG,
+  Windows MSI/NSIS installers, Android APK/AAB, and an unsigned iOS Simulator
+  debug app archive.
+- Android artifacts are unsigned unless `ANDROID_KEYSTORE_BASE64`,
+  `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD`
+  are configured as GitHub Secrets. The workflow never signs release APKs
+  with the debug key.
+- The iOS output is simulator-only; an installable iPhone IPA needs Apple
+  distribution signing and provisioning, which this workflow does not claim
+  to provide. Desktop packages are also unsigned, consistent with ADR 0007.
+- Each prerelease is tagged `main-<run number>-<commit SHA>` and includes the
+  artifacts from all four platform jobs. Any failed build or test prevents
+  publishing.
