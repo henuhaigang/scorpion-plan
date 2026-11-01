@@ -6,13 +6,15 @@ use std::time::{Duration, SystemTime, UNIX_EPOCH};
 #[cfg(target_os = "macos")]
 use std::cell::RefCell;
 
+#[cfg(target_os = "macos")]
+use tauri::WebviewWindow;
 use tauri::{
     menu::{Menu, MenuItem},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
     AppHandle, Manager, WindowEvent,
 };
-#[cfg(target_os = "macos")]
-use tauri::{PhysicalPosition, PhysicalSize, WebviewWindow};
+#[cfg(any(target_os = "macos", test))]
+use tauri::{PhysicalPosition, PhysicalSize};
 #[cfg(not(target_os = "macos"))]
 use tauri::{Position, Size, WebviewWindow};
 
@@ -357,8 +359,9 @@ fn pointer_is_inside_panel(window: &WebviewWindow) -> Result<bool, String> {
     let position = window
         .cursor_position()
         .map_err(|error| error.to_string())?;
-    let size = window.inner_size().map_err(|error| error.to_string())?;
-    Ok(point_is_inside_panel(position, size))
+    let origin = window.outer_position().map_err(|error| error.to_string())?;
+    let size = window.outer_size().map_err(|error| error.to_string())?;
+    Ok(point_is_inside_panel(position, origin, size))
 }
 
 #[cfg(target_os = "macos")]
@@ -518,12 +521,16 @@ fn position_near_tray(app: &AppHandle, window: &WebviewWindow) -> Result<(), Str
         .map_err(|e| e.to_string())
 }
 
-#[cfg(target_os = "macos")]
-fn point_is_inside_panel(position: PhysicalPosition<f64>, size: PhysicalSize<u32>) -> bool {
-    position.x >= 0.0
-        && position.y >= 0.0
-        && position.x < size.width as f64
-        && position.y < size.height as f64
+#[cfg(any(target_os = "macos", test))]
+fn point_is_inside_panel(
+    position: PhysicalPosition<f64>,
+    origin: PhysicalPosition<i32>,
+    size: PhysicalSize<u32>,
+) -> bool {
+    let x = position.x - f64::from(origin.x);
+    let y = position.y - f64::from(origin.y);
+
+    x >= 0.0 && y >= 0.0 && x < size.width as f64 && y < size.height as f64
 }
 
 #[cfg(test)]
@@ -541,6 +548,50 @@ mod tests {
         .unwrap();
 
         assert_eq!(position, PhysicalPosition::new(975, 375));
+    }
+
+    #[test]
+    fn detects_clicks_inside_panel_at_nonzero_desktop_coordinates() {
+        let origin = PhysicalPosition::new(975, 375);
+        let size = PhysicalSize::new(360, 480);
+
+        assert!(point_is_inside_panel(
+            PhysicalPosition::new(1000.0, 400.0),
+            origin,
+            size
+        ));
+        assert!(point_is_inside_panel(
+            PhysicalPosition::new(1334.0, 854.0),
+            origin,
+            size
+        ));
+        assert!(!point_is_inside_panel(
+            PhysicalPosition::new(974.0, 400.0),
+            origin,
+            size
+        ));
+        assert!(!point_is_inside_panel(
+            PhysicalPosition::new(1335.0, 400.0),
+            origin,
+            size
+        ));
+    }
+
+    #[test]
+    fn detects_clicks_inside_panel_on_a_monitor_left_of_desktop_origin() {
+        let origin = PhysicalPosition::new(-1440, 120);
+        let size = PhysicalSize::new(360, 480);
+
+        assert!(point_is_inside_panel(
+            PhysicalPosition::new(-1400.0, 160.0),
+            origin,
+            size
+        ));
+        assert!(!point_is_inside_panel(
+            PhysicalPosition::new(-1441.0, 160.0),
+            origin,
+            size
+        ));
     }
 
     #[test]
@@ -629,22 +680,27 @@ mod tests {
     #[cfg(target_os = "macos")]
     #[test]
     fn panel_click_positions_are_not_outside_clicks() {
+        let origin = PhysicalPosition::new(0, 0);
         let size = PhysicalSize::new(360, 480);
 
         assert!(point_is_inside_panel(
             PhysicalPosition::new(10.0, 10.0),
+            origin,
             size
         ));
         assert!(point_is_inside_panel(
             PhysicalPosition::new(359.0, 479.0),
+            origin,
             size
         ));
         assert!(!point_is_inside_panel(
             PhysicalPosition::new(-1.0, 10.0),
+            origin,
             size
         ));
         assert!(!point_is_inside_panel(
             PhysicalPosition::new(360.0, 480.0),
+            origin,
             size
         ));
     }

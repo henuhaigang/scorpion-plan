@@ -57,6 +57,9 @@ beforeEach(() => {
     if (command === "list_board") {
       return Promise.resolve(board);
     }
+    if (command === "list_history") {
+      return Promise.resolve({ items: [] });
+    }
     if (command === "update_task") {
       return Promise.resolve(
         makeTask({
@@ -125,6 +128,17 @@ describe("App shell", () => {
     fireEvent.keyDown(window, { key: "Escape" });
 
     expect(mockedInvoke).toHaveBeenCalledWith("panel_hide");
+  });
+
+  it("keeps the panel visible while navigating to history and back", async () => {
+    render(<App />);
+
+    fireEvent.click(await screen.findByRole("button", { name: "历史" }));
+    expect(await screen.findByRole("heading", { name: "历史" })).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "← 返回" }));
+    expect(await screen.findByRole("heading", { name: "今日" })).toBeInTheDocument();
+    expect(mockedInvoke).not.toHaveBeenCalledWith("panel_hide");
   });
 });
 
