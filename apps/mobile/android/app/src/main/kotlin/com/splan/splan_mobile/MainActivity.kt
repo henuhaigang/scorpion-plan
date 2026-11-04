@@ -1,4 +1,4 @@
-package com.dayflow.dayflow_mobile
+package com.splan.splan_mobile
 
 import io.flutter.embedding.android.FlutterActivity
 

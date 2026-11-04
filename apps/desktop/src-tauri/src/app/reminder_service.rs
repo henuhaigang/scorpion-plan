@@ -136,7 +136,7 @@ impl<
                 continue;
             }
 
-            match self.notifier.send(&task.title, "DayFlow 任务提醒") {
+            match self.notifier.send(&task.title, "Splan 任务提醒") {
                 Ok(()) => {
                     self.jobs
                         .update_status(job.id, ReminderJobStatus::Fired, None)?;

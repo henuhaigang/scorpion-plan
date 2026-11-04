@@ -1,4 +1,4 @@
-# DayFlow V1.0 Release Summary
+# Splan V1.0 Release Summary
 
 ## Date: 2026-11-01
 
@@ -40,8 +40,8 @@
 - **Build**: SUCCESS (macOS app and DMG packaged)
 
 ### Build Artifacts
-- `apps/desktop/src-tauri/target/release/bundle/macos/DayFlow.app`
-- `apps/desktop/src-tauri/target/release/bundle/dmg/DayFlow_0.1.0_aarch64.dmg`
+- `apps/desktop/src-tauri/target/release/bundle/macos/Splan.app`
+- `apps/desktop/src-tauri/target/release/bundle/dmg/Splan_0.1.0_aarch64.dmg`
 
 ### How to Build
 ```bash
@@ -51,17 +51,17 @@ pnpm build
 
 ### How to Run
 ```bash
-open apps/desktop/src-tauri/target/release/bundle/macos/DayFlow.app
+open apps/desktop/src-tauri/target/release/bundle/macos/Splan.app
 ```
 
 ### Data Location
 ```
-~/Library/Application Support/com.dayflow.desktop/dayflow.sqlite
+~/Library/Application Support/com.splan.desktop/splan.sqlite
 ```
 
 ### Backup
 ```
-~/Library/Application Support/com.dayflow.desktop/backups/
+~/Library/Application Support/com.splan.desktop/backups/
 ```
 
 ## Mobile (iOS/Android) — FEATURES IMPLEMENTED; OS-LEVEL VERIFICATION PARTIAL
@@ -166,14 +166,14 @@ docs/
   widget completion test passed on both simulators.
 - Android and iOS debug apps rebuilt, installed, and cold-launched on the
   Pixel 7 emulator (API 34) and iPhone 16 Pro simulator (iOS 18.3).
-- The Android widget picker lists DayFlow and its preview renders correctly.
+- The Android widget picker lists Splan and its preview renders correctly.
   Actual home-screen placement/direct tapping remains unverified.
 - `cargo fmt --check`, `cargo test --locked` (105 tests), strict Clippy, and
-  release build passed. `pnpm --filter dayflow-desktop build:desktop` produced
+  release build passed. `pnpm --filter splan-desktop build:desktop` produced
   the macOS app and DMG successfully.
 - Existing macOS runtime automation previously verified the shortcut and
   outside-click behavior. A fresh retest in this session was inconclusive
-  because two DayFlow processes were already running; do not count that attempt
+  because two Splan processes were already running; do not count that attempt
   as a new runtime pass.
 - Remaining risks: direct iOS App Intent tapping, direct Android widget
   placement/tapping, physical devices, release signing, and a single-instance
@@ -188,10 +188,10 @@ docs/
   the normal tray click remains a toggle.
 - `cargo fmt --check`, all 107 Rust tests, and strict Clippy passed. The Tauri
   release app and DMG built successfully.
-- Installed the ad-hoc-signed release app at `~/Applications/DayFlow.app`.
+- Installed the ad-hoc-signed release app at `~/Applications/Splan.app`.
   Packaged runtime checks verified `⌘⇧Space` opens the centered panel, moving
   the pointer away from the menu-bar corner keeps it open, and one external
-  click hides it while DayFlow continues running.
+  click hides it while Splan continues running.
 - Android (`emulator-5554`) and iOS (iPhone 16 Pro simulator) apps were
   rebuilt, installed, and launched. `flutter analyze` and all 18 Flutter unit
   tests passed.

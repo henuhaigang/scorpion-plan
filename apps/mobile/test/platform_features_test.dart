@@ -1,6 +1,6 @@
-import 'package:dayflow_mobile/src/domain/task.dart';
-import 'package:dayflow_mobile/src/platform/mobile_reminder_service.dart';
-import 'package:dayflow_mobile/src/platform/task_widget_service.dart';
+import 'package:splan_mobile/src/domain/task.dart';
+import 'package:splan_mobile/src/platform/mobile_reminder_service.dart';
+import 'package:splan_mobile/src/platform/task_widget_service.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 Task _task({

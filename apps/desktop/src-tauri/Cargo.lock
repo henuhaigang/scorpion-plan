@@ -654,28 +654,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "dayflow-desktop"
-version = "0.1.0"
-dependencies = [
- "block2",
- "chrono",
- "chrono-tz",
- "iana-time-zone",
- "objc2",
- "objc2-app-kit",
- "rusqlite",
- "serde",
- "serde_json",
- "tauri",
- "tauri-build",
- "tauri-plugin-global-shortcut",
- "tauri-plugin-notification",
- "tempfile",
- "thiserror 2.0.21",
- "uuid",
-]
-
-[[package]]
 name = "dbus"
 version = "0.9.12"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -3354,6 +3332,28 @@ dependencies = [
  "gobject-sys",
  "libc",
  "system-deps",
+]
+
+[[package]]
+name = "splan-desktop"
+version = "0.1.0"
+dependencies = [
+ "block2",
+ "chrono",
+ "chrono-tz",
+ "iana-time-zone",
+ "objc2",
+ "objc2-app-kit",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tauri",
+ "tauri-build",
+ "tauri-plugin-global-shortcut",
+ "tauri-plugin-notification",
+ "tempfile",
+ "thiserror 2.0.21",
+ "uuid",
 ]
 
 [[package]]

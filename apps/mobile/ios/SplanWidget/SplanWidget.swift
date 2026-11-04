@@ -2,8 +2,8 @@ import AppIntents
 import SwiftUI
 import WidgetKit
 
-private let appGroup = "group.com.dayflow.dayflowMobile"
-private let widgetKind = "DayFlowWidget"
+private let appGroup = "group.com.splan.splanMobile"
+private let widgetKind = "SplanWidget"
 
 private struct WidgetTask: Decodable, Identifiable {
   let id: String
@@ -17,7 +17,7 @@ private struct TaskSnapshot: Decodable {
   let legacy: [WidgetTask]
 
   static func load() -> TaskSnapshot {
-    let data = UserDefaults(suiteName: appGroup)?.string(forKey: "dayFlowTasks") ?? ""
+    let data = UserDefaults(suiteName: appGroup)?.string(forKey: "splanTasks") ?? ""
     guard let decoded = data.data(using: .utf8),
       let snapshot = try? JSONDecoder().decode(TaskSnapshot.self, from: decoded)
     else {
@@ -62,12 +62,12 @@ private struct TaskRow: View {
         .buttonStyle(.plain)
         .accessibilityLabel("完成\(task.title)")
       } else {
-        Link(destination: URL(string: "dayflow://widget")!) {
+        Link(destination: URL(string: "splan://widget")!) {
           Image(systemName: "circle")
             .font(.system(size: 19, weight: .regular))
             .foregroundStyle(palette.accent)
         }
-        .accessibilityLabel("打开 DayFlow")
+        .accessibilityLabel("打开 Splan")
       }
 
       Text(task.title)
@@ -122,8 +122,8 @@ private struct TaskWidgetView: View {
           .frame(width: 31, height: 31)
           .background(palette.accent, in: RoundedRectangle(cornerRadius: 10))
         VStack(alignment: .leading, spacing: 2) {
-          Link(destination: URL(string: "dayflow://widget")!) {
-            Text("DayFlow")
+          Link(destination: URL(string: "splan://widget")!) {
+            Text("Splan")
               .font(.system(size: 15, weight: .bold))
               .foregroundStyle(palette.primaryText)
           }
@@ -208,7 +208,7 @@ private extension View {
 
 @available(iOSApplicationExtension 16.0, *)
 struct CompleteWidgetTaskIntent: AppIntent {
-  static var title: LocalizedStringResource = "完成 DayFlow 任务"
+  static var title: LocalizedStringResource = "完成 Splan 任务"
   static var openAppWhenRun = false
 
   @Parameter(title: "Task ID")
@@ -235,7 +235,7 @@ struct CompleteWidgetTaskIntent: AppIntent {
     let pending = defaults.string(forKey: "pendingCompletionIds") ?? "[]"
     var pendingIds = (try? JSONDecoder().decode([String].self, from: Data(pending.utf8))) ?? []
     if !pendingIds.contains(taskID) { pendingIds.append(taskID) }
-    defaults.set(String(data: encoded, encoding: .utf8), forKey: "dayFlowTasks")
+    defaults.set(String(data: encoded, encoding: .utf8), forKey: "splanTasks")
     defaults.set(String(data: try JSONEncoder().encode(pendingIds), encoding: .utf8), forKey: "pendingCompletionIds")
     WidgetCenter.shared.reloadTimelines(ofKind: widgetKind)
     return .result()
@@ -246,20 +246,20 @@ private enum WidgetActionError: Error {
   case appGroupUnavailable
 }
 
-private struct DayFlowWidget: Widget {
+private struct SplanWidget: Widget {
   var body: some WidgetConfiguration {
     StaticConfiguration(kind: widgetKind, provider: TaskProvider()) { entry in
       TaskWidgetView(entry: entry)
     }
-    .configurationDisplayName("DayFlow 任务")
+    .configurationDisplayName("Splan 任务")
     .description("查看今日任务和之前未完成的任务，可快速完成今日任务。")
     .supportedFamilies([.systemSmall, .systemMedium, .systemLarge])
   }
 }
 
 @main
-private struct DayFlowWidgetBundle: WidgetBundle {
+private struct SplanWidgetBundle: WidgetBundle {
   var body: some Widget {
-    DayFlowWidget()
+    SplanWidget()
   }
 }

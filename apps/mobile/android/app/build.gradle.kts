@@ -5,19 +5,18 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
-val releaseSigningValues = listOf(
-    providers.environmentVariable("ANDROID_KEYSTORE_PATH").orNull,
-    providers.environmentVariable("ANDROID_STORE_PASSWORD").orNull,
-    providers.environmentVariable("ANDROID_KEY_ALIAS").orNull,
-    providers.environmentVariable("ANDROID_KEY_PASSWORD").orNull,
-)
-val hasReleaseSigning = releaseSigningValues.all { !it.isNullOrBlank() }
-if (releaseSigningValues.any { !it.isNullOrBlank() } && !hasReleaseSigning) {
-    error("Android release signing requires all four ANDROID_* signing environment variables.")
-}
+val envKeystorePath = providers.environmentVariable("ANDROID_KEYSTORE_PATH").orNull
+val envStorePassword = providers.environmentVariable("ANDROID_STORE_PASSWORD").orNull
+val envKeyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").orNull
+val envKeyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").orNull
+val hasEnvSigning = listOf(envKeystorePath, envStorePassword, envKeyAlias, envKeyPassword)
+    .all { !it.isNullOrBlank() }
+
+val localKeystoreFile = rootProject.file("keystore/splan-release.jks")
+val hasLocalKeystore = localKeystoreFile.exists()
 
 android {
-    namespace = "com.dayflow.dayflow_mobile"
+    namespace = "com.splan.splan_mobile"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -29,7 +28,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.dayflow.dayflow_mobile"
+        applicationId = "com.splan.splan_mobile"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -43,20 +42,28 @@ android {
     }
 
     signingConfigs {
-        if (hasReleaseSigning) {
+        if (hasEnvSigning) {
             create("release") {
-                storeFile = rootProject.file(requireNotNull(releaseSigningValues[0]))
-                storePassword = requireNotNull(releaseSigningValues[1])
-                keyAlias = requireNotNull(releaseSigningValues[2])
-                keyPassword = requireNotNull(releaseSigningValues[3])
+                storeFile = rootProject.file(requireNotNull(envKeystorePath))
+                storePassword = requireNotNull(envStorePassword)
+                keyAlias = requireNotNull(envKeyAlias)
+                keyPassword = requireNotNull(envKeyPassword)
+            }
+        } else if (hasLocalKeystore) {
+            create("release") {
+                storeFile = localKeystoreFile
+                storePassword = "splan2025"
+                keyAlias = "splan"
+                keyPassword = "splan2025"
             }
         }
     }
 
     buildTypes {
         release {
-            if (hasReleaseSigning) {
-                signingConfig = signingConfigs.getByName("release")
+            val releaseConfig = signingConfigs.findByName("release")
+            if (releaseConfig != null) {
+                signingConfig = releaseConfig
             }
         }
     }

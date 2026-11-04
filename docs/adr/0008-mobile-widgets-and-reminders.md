@@ -18,13 +18,13 @@ deadlines.
 ## Decision
 
 - The Flutter app publishes a compact JSON snapshot to Android widget storage
-  and to the iOS App Group `group.com.dayflow.dayflowMobile`; widgets never
+  and to the iOS App Group `group.com.splan.splanMobile`; widgets never
   query SQLite directly.
 - Android widget completion sends a validated task identifier to a Flutter
   background callback, which performs the normal versioned SQLite transition.
 - iOS 17+ App Intents optimistically remove the task from the shared widget
   snapshot and persist a completion queue. The app applies that queue to SQLite
-  on its next activation. iOS 15–16 widgets remain view-only and open DayFlow
+  on its next activation. iOS 15–16 widgets remain view-only and open Splan
   when tapped.
 - Android widget callbacks do not close their temporary repository: sqflite
   may return the path-cached database handle also used by the foreground app.

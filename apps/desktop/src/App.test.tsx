@@ -128,9 +128,9 @@ afterEach(() => {
 });
 
 describe("App shell", () => {
-  it("renders the DayFlow title", async () => {
+  it("renders the Splan title", async () => {
     render(<App />);
-    expect(await screen.findByRole("heading", { name: "DayFlow" })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Splan" })).toBeInTheDocument();
   });
 
   it("shows the concise daily tagline", async () => {

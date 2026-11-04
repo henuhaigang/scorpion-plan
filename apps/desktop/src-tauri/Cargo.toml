@@ -1,13 +1,13 @@
 [package]
-name = "dayflow-desktop"
+name = "splan-desktop"
 version = "0.1.0"
-description = "DayFlow — local-first personal task and schedule app (desktop)"
-authors = ["DayFlow"]
+description = "Splan — local-first personal task and schedule app (desktop)"
+authors = ["Splan"]
 edition = "2021"
 rust-version = "1.77"
 
 [lib]
-name = "dayflow_desktop"
+name = "splan_desktop"
 crate-type = ["staticlib", "cdylib", "rlib"]
 
 [build-dependencies]

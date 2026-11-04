@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# DayFlow CI pipeline: format -> lint -> test -> build.
+# Splan CI pipeline: format -> lint -> test -> build.
 # Runs the same checks as .github/workflows/ci.yml.
 set -euo pipefail
 
@@ -22,13 +22,13 @@ pnpm install --frozen-lockfile
 
 step "2. Format check (prettier + rustfmt)"
 pnpm format:check
-pnpm --filter dayflow-desktop format:rust:check
+pnpm --filter splan-desktop format:rust:check
 
 step "3. Lint (eslint + clippy)"
 pnpm lint
 
 step "4. Typecheck + unit tests (vitest + cargo test)"
-pnpm --filter dayflow-desktop exec tsc --noEmit
+pnpm --filter splan-desktop exec tsc --noEmit
 pnpm test
 
 step "5. Build (vite + tauri packaged app)"

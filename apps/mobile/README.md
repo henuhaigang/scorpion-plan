@@ -1,6 +1,6 @@
-# DayFlow Mobile
+# Splan Mobile
 
-Flutter client for DayFlow. Tasks are stored locally; widgets receive a compact
+Flutter client for Splan. Tasks are stored locally; widgets receive a compact
 snapshot from the app and do not access the task database directly.
 
 ## Development and verification
@@ -30,22 +30,22 @@ so both operations use the same in-flight SQLite connection.
 ## Add a home-screen widget
 
 Widgets are managed by iOS and Android and are not placed on the home screen
-automatically. Open DayFlow once, then:
+automatically. Open Splan once, then:
 
 - **iOS:** Long-press an empty area of the home screen, choose **Edit** >
-  **Add Widget**, search for **DayFlow**, choose a size, and add it.
+  **Add Widget**, search for **Splan**, choose a size, and add it.
 - **Android:** Long-press an empty area of the home screen, open **Widgets**,
-  find **DayFlow**, then drag its widget onto the home screen. After placing
+  find **Splan**, then drag its widget onto the home screen. After placing
   it, long-press the widget and drag its resize handles; smaller heights show
   fewer task rows, while larger sizes reveal more rows and the legacy summary.
 
 The app's **Add home-screen widget** button shows these steps and can republish
 the latest task snapshot. Widget refresh timing is controlled by the OS.
 iOS 17 and later support completing a task from its widget; the completion is
-queued in the App Group and applied to SQLite when DayFlow next becomes active.
+queued in the App Group and applied to SQLite when Splan next becomes active.
 App Group setup completes before synchronization reads queued iOS widget
 completions, so this path also works on the first synchronization after launch.
-Earlier iOS versions open DayFlow when the widget is tapped.
+Earlier iOS versions open Splan when the widget is tapped.
 
 The Android and iOS widgets use the same compact indigo/slate visual language
 as the mobile app. The OS controls widget sizing, refresh timing, and home

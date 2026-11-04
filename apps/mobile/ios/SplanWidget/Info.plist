@@ -5,9 +5,9 @@
 	<key>CFBundleExecutable</key>
 	<string>$(EXECUTABLE_NAME)</string>
 	<key>CFBundleName</key>
-	<string>DayFlowWidget</string>
+	<string>SplanWidget</string>
 	<key>CFBundleDisplayName</key>
-	<string>DayFlow Widgets</string>
+	<string>Splan Widgets</string>
 	<key>CFBundleIdentifier</key>
 	<string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
 	<key>CFBundlePackageType</key>

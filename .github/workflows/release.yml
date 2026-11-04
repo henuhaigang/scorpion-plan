@@ -37,7 +37,7 @@ jobs:
         shell: bash
         run: |
           if [[ -n "$ANDROID_KEYSTORE_BASE64" ]]; then
-            keystore="$RUNNER_TEMP/dayflow-upload-key.jks"
+            keystore="$RUNNER_TEMP/splan-upload-key.jks"
             printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore"
             echo "ANDROID_KEYSTORE_PATH=$keystore" >> "$GITHUB_ENV"
             echo "signed=true" >> "$GITHUB_OUTPUT"
@@ -55,13 +55,39 @@ jobs:
           flutter build appbundle --release --build-number "$GITHUB_RUN_NUMBER"
           mkdir -p "$RUNNER_TEMP/release-assets"
           cp build/app/outputs/flutter-apk/app-release.apk \
-            "$RUNNER_TEMP/release-assets/DayFlow-Android.apk"
+            "$RUNNER_TEMP/release-assets/Splan-Android.apk"
           cp build/app/outputs/bundle/release/app-release.aab \
-            "$RUNNER_TEMP/release-assets/DayFlow-Android.aab"
+            "$RUNNER_TEMP/release-assets/Splan-Android.aab"
           if [[ "${{ steps.android-signing.outputs.signed }}" != "true" ]]; then
             printf '%s\n' "Unsigned: configure Android signing secrets to produce distributable packages." \
               > "$RUNNER_TEMP/release-assets/Android-SIGNING-STATUS.txt"
           fi
+      - name: Verify APK
+        working-directory: apps/mobile
+        run: |
+          APK_PATH="build/app/outputs/flutter-apk/app-release.apk"
+          if [[ ! -f "$APK_PATH" ]]; then
+            echo "ERROR: APK not found at $APK_PATH" >&2
+            exit 1
+          fi
+          echo "APK size: $(du -h "$APK_PATH" | cut -f1)"
+          echo "Verifying APK signature..."
+          if command -v apksigner &> /dev/null; then
+            apksigner verify --print-certs "$APK_PATH"
+          else
+            echo "apksigner not found, skipping signature verification"
+          fi
+          echo "Checking APK contents..."
+          unzip -l "$APK_PATH" | grep -E "AndroidManifest.xml|classes.dex|META-INF" | head -20
+          if ! unzip -l "$APK_PATH" | grep -q "AndroidManifest.xml"; then
+            echo "ERROR: AndroidManifest.xml not found in APK" >&2
+            exit 1
+          fi
+          if ! unzip -l "$APK_PATH" | grep -q "classes.dex"; then
+            echo "ERROR: classes.dex not found in APK" >&2
+            exit 1
+          fi
+          echo "APK verification passed"
       - uses: actions/upload-artifact@v4
         with:
           name: client-android
@@ -95,7 +121,7 @@ jobs:
           mkdir -p "$RUNNER_TEMP/release-assets"
           ditto -c -k --sequesterRsrc --keepParent \
             build/ios/iphonesimulator/Runner.app \
-            "$RUNNER_TEMP/release-assets/DayFlow-iOS-Simulator.zip"
+            "$RUNNER_TEMP/release-assets/Splan-iOS-Simulator.zip"
           printf '%s\n' \
             "Simulator build only; not installable on physical iPhones." \
             "This workflow does not produce a signed device IPA." \
@@ -125,7 +151,7 @@ jobs:
       - name: Test desktop
         run: pnpm test
       - name: Build macOS app and DMG
-        run: pnpm --filter dayflow-desktop build:desktop
+        run: pnpm --filter splan-desktop build:desktop
       - uses: actions/upload-artifact@v4
         with:
           name: client-macos
@@ -151,7 +177,7 @@ jobs:
       - name: Test desktop
         run: pnpm test
       - name: Build Windows installers
-        run: pnpm --filter dayflow-desktop exec tauri build --bundles msi,nsis
+        run: pnpm --filter splan-desktop exec tauri build --bundles msi,nsis
       - name: Stage Windows installers
         shell: pwsh
         run: |
@@ -181,7 +207,7 @@ jobs:
       - uses: softprops/action-gh-release@v2
         with:
           tag_name: main-${{ github.run_number }}-${{ github.sha }}
-          name: DayFlow main build ${{ github.run_number }}
+          name: Splan main build ${{ github.run_number }}
           prerelease: true
           make_latest: false
           generate_release_notes: true

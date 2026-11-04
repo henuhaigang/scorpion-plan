@@ -237,7 +237,7 @@ export default function App() {
     <main className="panel">
       <header className="panel-header">
         <div>
-          <h1 className="panel-title">DayFlow</h1>
+          <h1 className="panel-title">Splan</h1>
           <p className="panel-subtitle">今天，轻松安排</p>
         </div>
         <button

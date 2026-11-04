@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-26
-- Deciders: DayFlow engineering (agent-assisted)
+- Deciders: Splan engineering (agent-assisted)
 
 ## Context
 
@@ -20,7 +20,7 @@ forbids auto-update without a security review.
 3. **Signing**: V1 builds are unsigned/ad-hoc. macOS Gatekeeper behavior for
    unsigned apps is documented in the README; Developer ID + notarization is a
    release-gate item, not a code item.
-4. Bundle identifier: `com.dayflow.desktop`.
+4. Bundle identifier: `com.splan.desktop`.
 5. Local data location is documented (Tauri app data dir) with a backup/export
    strategy defined in Milestone 5.
 

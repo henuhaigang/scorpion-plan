@@ -1,5 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:dayflow_mobile/src/domain/task.dart';
+import 'package:splan_mobile/src/domain/task.dart';
 
 void main() {
   group('Task model', () {

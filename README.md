@@ -1,6 +1,6 @@
-# DayFlow
+# Splan
 
-DayFlow is a local-first task and schedule app for macOS, iOS, and Android.
+Splan is a local-first task and schedule app for macOS, iOS, and Android.
 The desktop client uses Tauri 2, React, TypeScript, Rust, and SQLite. The
 mobile clients use Flutter, Dart, SQLite, and native home-screen widgets.
 Core task management works offline; cloud sync is out of scope for V1.
@@ -46,13 +46,13 @@ pnpm run test
 Run the Tauri desktop app in development mode:
 
 ```bash
-pnpm --filter dayflow-desktop tauri dev
+pnpm --filter splan-desktop tauri dev
 ```
 
 Package the desktop app for the current host platform:
 
 ```bash
-pnpm --filter dayflow-desktop build:desktop
+pnpm --filter splan-desktop build:desktop
 ```
 
 The desktop frontend and Rust host have separate checks. `pnpm run lint`
@@ -77,7 +77,7 @@ flutter run -d <ios-simulator-id>
 ```
 
 Widgets are managed by the operating system and must be added by the user:
-long-press the home screen and select DayFlow from the widget gallery. See
+long-press the home screen and select Splan from the widget gallery. See
 [apps/mobile/README.md](apps/mobile/README.md) for platform behavior and
 widget setup.
 
@@ -96,7 +96,7 @@ are unsigned.
 Desktop and mobile task flows, local SQLite persistence, reminder handling,
 and native widget targets are implemented. Flutter analysis and unit tests
 pass; Android and iOS apps install and launch on their simulators. The macOS
-app is installed in `~/Applications/DayFlow.app`; the `⌘⇧Space` shortcut,
+app is installed in `~/Applications/Splan.app`; the `⌘⇧Space` shortcut,
 panel persistence while moving the pointer away from the menu bar, and
 single-click outside dismissal were verified against the packaged app. Direct
 Android/iOS home-screen widget placement/tapping and physical-device behavior

@@ -1,7 +1,7 @@
-# DayFlow Product Requirements Document
+# Splan Product Requirements Document
 
 ## 1. Product
-**Name:** DayFlow (working name)  
+**Name:** Splan (working name)  
 **Core promise:** 让重要的事情，主动出现在你面前。  
 **Platforms:** macOS, Windows, iPhone, Android.  
 **Product strategy:** staged delivery, local-first core, architecture ready for eventual sync.

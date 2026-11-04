@@ -18,8 +18,8 @@
 		97C146FE1CF9000F007C117D /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FD1CF9000F007C117D /* Assets.xcassets */; };
 		97C147011CF9000F007C117D /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 97C146FF1CF9000F007C117D /* LaunchScreen.storyboard */; };
 		CF5074C4E02AADDDE4BB865F /* Pods_RunnerTests.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 0A17F34DA9232AB57D0987F4 /* Pods_RunnerTests.framework */; };
-		A20000000000000000000001 /* DayFlowWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* DayFlowWidget.swift */; };
-		A20000000000000000000002 /* DayFlowWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004 /* DayFlowWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		A20000000000000000000001 /* SplanWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = A10000000000000000000001 /* SplanWidget.swift */; };
+		A20000000000000000000002 /* SplanWidget.appex in Embed App Extensions */ = {isa = PBXBuildFile; fileRef = A10000000000000000000004 /* SplanWidget.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -35,7 +35,7 @@
 			containerPortal = 97C146E61CF9000F007C117D /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = A80000000000000000000001;
-			remoteInfo = DayFlowWidget;
+			remoteInfo = SplanWidget;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -56,7 +56,7 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				A20000000000000000000002 /* DayFlowWidget.appex in Embed App Extensions */,
+				A20000000000000000000002 /* SplanWidget.appex in Embed App Extensions */,
 			);
 			name = "Embed App Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -89,10 +89,10 @@
 		97C147021CF9000F007C117D /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		E741765B35299CD45B25514E /* Pods-Runner.profile.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.profile.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.profile.xcconfig"; sourceTree = "<group>"; };
 		F3427AFB29049529E565F184 /* Pods-Runner.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-Runner.debug.xcconfig"; path = "Target Support Files/Pods-Runner/Pods-Runner.debug.xcconfig"; sourceTree = "<group>"; };
-		A10000000000000000000001 /* DayFlowWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DayFlowWidget.swift; sourceTree = "<group>"; };
+		A10000000000000000000001 /* SplanWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SplanWidget.swift; sourceTree = "<group>"; };
 		A10000000000000000000002 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
-		A10000000000000000000003 /* DayFlowWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DayFlowWidget.entitlements; sourceTree = "<group>"; };
-		A10000000000000000000004 /* DayFlowWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = DayFlowWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
+		A10000000000000000000003 /* SplanWidget.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = SplanWidget.entitlements; sourceTree = "<group>"; };
+		A10000000000000000000004 /* SplanWidget.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = SplanWidget.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		A10000000000000000000005 /* Runner.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Runner.entitlements; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -162,7 +162,7 @@
 				331C8082294A63A400263BE5 /* RunnerTests */,
 				D29DC9608E7B588546A6714D /* Pods */,
 				370B745219C95EAE5CBAD023 /* Frameworks */,
-				A11000000000000000000001 /* DayFlowWidget */,
+				A11000000000000000000001 /* SplanWidget */,
 			);
 			sourceTree = "<group>";
 		};
@@ -171,7 +171,7 @@
 			children = (
 				97C146EE1CF9000F007C117D /* Runner.app */,
 				331C8081294A63A400263BE5 /* RunnerTests.xctest */,
-				A10000000000000000000004 /* DayFlowWidget.appex */,
+				A10000000000000000000004 /* SplanWidget.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -207,14 +207,14 @@
 			path = Pods;
 			sourceTree = "<group>";
 		};
-		A11000000000000000000001 /* DayFlowWidget */ = {
+		A11000000000000000000001 /* SplanWidget */ = {
 			isa = PBXGroup;
 			children = (
-				A10000000000000000000001 /* DayFlowWidget.swift */,
+				A10000000000000000000001 /* SplanWidget.swift */,
 				A10000000000000000000002 /* Info.plist */,
-				A10000000000000000000003 /* DayFlowWidget.entitlements */,
+				A10000000000000000000003 /* SplanWidget.entitlements */,
 			);
-			path = DayFlowWidget;
+			path = SplanWidget;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -266,9 +266,9 @@
 			productReference = 97C146EE1CF9000F007C117D /* Runner.app */;
 			productType = "com.apple.product-type.application";
 		};
-		A80000000000000000000001 /* DayFlowWidget */ = {
+		A80000000000000000000001 /* SplanWidget */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = A90000000000000000000001 /* Build configuration list for PBXNativeTarget "DayFlowWidget" */;
+			buildConfigurationList = A90000000000000000000001 /* Build configuration list for PBXNativeTarget "SplanWidget" */;
 			buildPhases = (
 				A40000000000000000000001 /* Sources */,
 				A50000000000000000000001 /* Frameworks */,
@@ -278,9 +278,9 @@
 			);
 			dependencies = (
 			);
-			name = DayFlowWidget;
-			productName = DayFlowWidget;
-			productReference = A10000000000000000000004 /* DayFlowWidget.appex */;
+			name = SplanWidget;
+			productName = SplanWidget;
+			productReference = A10000000000000000000004 /* SplanWidget.appex */;
 			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
@@ -324,7 +324,7 @@
 			targets = (
 				97C146ED1CF9000F007C117D /* Runner */,
 				331C8080294A63A400263BE5 /* RunnerTests */,
-				A80000000000000000000001 /* DayFlowWidget */,
+				A80000000000000000000001 /* SplanWidget */,
 			);
 		};
 /* End PBXProject section */
@@ -475,7 +475,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				A20000000000000000000001 /* DayFlowWidget.swift in Sources */,
+				A20000000000000000000001 /* SplanWidget.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -489,7 +489,7 @@
 		};
 		A30000000000000000000002 /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = A80000000000000000000001 /* DayFlowWidget */;
+			target = A80000000000000000000001 /* SplanWidget */;
 			targetProxy = A30000000000000000000001 /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -582,7 +582,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.dayflow.dayflowMobile;
+				PRODUCT_BUNDLE_IDENTIFIER = com.splan.splanMobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -599,7 +599,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.dayflow.dayflowMobile.RunnerTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.splan.splanMobile.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -617,7 +617,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.dayflow.dayflowMobile.RunnerTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.splan.splanMobile.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Runner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Runner";
@@ -633,7 +633,7 @@
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = YES;
 				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.dayflow.dayflowMobile.RunnerTests;
+				PRODUCT_BUNDLE_IDENTIFIER = com.splan.splanMobile.RunnerTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_VERSION = 5.0;
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Runner.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Runner";
@@ -768,7 +768,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.dayflow.dayflowMobile;
+				PRODUCT_BUNDLE_IDENTIFIER = com.splan.splanMobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
@@ -792,7 +792,7 @@
 					"$(inherited)",
 					"@executable_path/Frameworks",
 				);
-				PRODUCT_BUNDLE_IDENTIFIER = com.dayflow.dayflowMobile;
+				PRODUCT_BUNDLE_IDENTIFIER = com.splan.splanMobile;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SWIFT_OBJC_BRIDGING_HEADER = "Runner/Runner-Bridging-Header.h";
 				SWIFT_VERSION = 5.0;
@@ -804,13 +804,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = DayFlowWidget/DayFlowWidget.entitlements;
+				CODE_SIGN_ENTITLEMENTS = SplanWidget/SplanWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = DayFlowWidget/Info.plist;
+				INFOPLIST_FILE = SplanWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.dayflow.dayflowMobile.DayFlowWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.splan.splanMobile.SplanWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -822,13 +822,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = DayFlowWidget/DayFlowWidget.entitlements;
+				CODE_SIGN_ENTITLEMENTS = SplanWidget/SplanWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = DayFlowWidget/Info.plist;
+				INFOPLIST_FILE = SplanWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.dayflow.dayflowMobile.DayFlowWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.splan.splanMobile.SplanWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -840,13 +840,13 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				APPLICATION_EXTENSION_API_ONLY = YES;
-				CODE_SIGN_ENTITLEMENTS = DayFlowWidget/DayFlowWidget.entitlements;
+				CODE_SIGN_ENTITLEMENTS = SplanWidget/SplanWidget.entitlements;
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				GENERATE_INFOPLIST_FILE = NO;
-				INFOPLIST_FILE = DayFlowWidget/Info.plist;
+				INFOPLIST_FILE = SplanWidget/Info.plist;
 				IPHONEOS_DEPLOYMENT_TARGET = 15.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.dayflow.dayflowMobile.DayFlowWidget;
+				PRODUCT_BUNDLE_IDENTIFIER = com.splan.splanMobile.SplanWidget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				SKIP_INSTALL = YES;
 				SWIFT_VERSION = 5.0;
@@ -887,7 +887,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		A90000000000000000000001 /* Build configuration list for PBXNativeTarget "DayFlowWidget" */ = {
+		A90000000000000000000001 /* Build configuration list for PBXNativeTarget "SplanWidget" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				A90000000000000000000002 /* Debug */,

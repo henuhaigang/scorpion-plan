@@ -1,14 +1,14 @@
 {
-  "name": "dayflow",
+  "name": "splan",
   "private": true,
   "version": "0.1.0",
   "packageManager": "pnpm@11.18.0",
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "lint": "pnpm --filter dayflow-desktop lint && pnpm --filter dayflow-desktop lint:rust",
-    "test": "pnpm --filter dayflow-desktop test && pnpm --filter dayflow-desktop test:rust",
-    "build": "pnpm --filter dayflow-desktop build:desktop",
+    "lint": "pnpm --filter splan-desktop lint && pnpm --filter splan-desktop lint:rust",
+    "test": "pnpm --filter splan-desktop test && pnpm --filter splan-desktop test:rust",
+    "build": "pnpm --filter splan-desktop build:desktop",
     "ci": "bash scripts/ci.sh"
   },
   "devDependencies": {

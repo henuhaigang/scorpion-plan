@@ -1,4 +1,4 @@
-package com.dayflow.dayflow_mobile
+package com.splan.splan_mobile
 
 import android.appwidget.AppWidgetManager
 import android.content.Context
@@ -12,7 +12,7 @@ import es.antonborri.home_widget.HomeWidgetPlugin
 import es.antonborri.home_widget.HomeWidgetProvider
 import org.json.JSONObject
 
-class DayFlowWidgetProvider : HomeWidgetProvider() {
+class SplanWidgetProvider : HomeWidgetProvider() {
     override fun onUpdate(
         context: Context,
         appWidgetManager: AppWidgetManager,
@@ -44,14 +44,14 @@ class DayFlowWidgetProvider : HomeWidgetProvider() {
         widgetData: SharedPreferences,
     ) {
         val snapshot = runCatching {
-            JSONObject(widgetData.getString("dayFlowTasks", "{}") ?: "{}")
+            JSONObject(widgetData.getString("splanTasks", "{}") ?: "{}")
         }.getOrElse { JSONObject() }
         val today = snapshot.optJSONArray("today")
         val legacyCount = snapshot.optInt("legacyCount")
         val legacy = snapshot.optJSONArray("legacy")
 
         appWidgetIds.forEach { widgetId ->
-            val views = RemoteViews(context.packageName, R.layout.dayflow_widget)
+            val views = RemoteViews(context.packageName, R.layout.splan_widget)
             val heightDp = appWidgetManager
                 .getAppWidgetOptions(widgetId)
                 .getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 260)
@@ -82,7 +82,7 @@ class DayFlowWidgetProvider : HomeWidgetProvider() {
                 HomeWidgetLaunchIntent.getActivity(
                     context,
                     MainActivity::class.java,
-                    Uri.parse("dayflow://widget"),
+                    Uri.parse("splan://widget"),
                 ),
             )
             val rowIds = listOf(
@@ -109,7 +109,7 @@ class DayFlowWidgetProvider : HomeWidgetProvider() {
                         rowId,
                         HomeWidgetBackgroundIntent.getBroadcast(
                             context,
-                            Uri.parse("dayflow://complete?id=${Uri.encode(taskId)}"),
+                            Uri.parse("splan://complete?id=${Uri.encode(taskId)}"),
                         ),
                     )
                     views.setContentDescription(

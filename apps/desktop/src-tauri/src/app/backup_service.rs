@@ -53,7 +53,7 @@ mod tests {
             .unwrap();
 
         let service = BackupService::new(src);
-        let dest = std::env::temp_dir().join("dayflow_test_backup.sqlite");
+        let dest = std::env::temp_dir().join("splan_test_backup.sqlite");
         let _ = fs::remove_file(&dest);
 
         let result = service.export(&dest).unwrap();
@@ -73,8 +73,8 @@ mod tests {
 
     #[test]
     fn default_backup_dir_is_correct() {
-        let app_dir = PathBuf::from("/tmp/dayflow");
+        let app_dir = PathBuf::from("/tmp/splan");
         let backup_dir = BackupService::default_backup_dir(&app_dir);
-        assert_eq!(backup_dir, PathBuf::from("/tmp/dayflow/backups"));
+        assert_eq!(backup_dir, PathBuf::from("/tmp/splan/backups"));
     }
 }

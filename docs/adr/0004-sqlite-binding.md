@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-26
-- Deciders: DayFlow engineering (agent-assisted)
+- Deciders: Splan engineering (agent-assisted)
 - Resolves: open decision in ADR 0002 (local storage)
 
 ## Context

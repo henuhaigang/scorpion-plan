@@ -1,4 +1,4 @@
-# Agent Operating Contract — DayFlow
+# Agent Operating Contract — Splan
 
 Read this file and all documents referenced below before implementing features.
 

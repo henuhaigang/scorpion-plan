@@ -8,7 +8,7 @@ import 'mobile_task_sync.dart';
 import 'task_widget_service.dart';
 
 @pragma('vm:entry-point')
-Future<void> handleDayFlowWidgetAction(Uri? uri) async {
+Future<void> handleSplanWidgetAction(Uri? uri) async {
   if (uri?.host != 'complete') return;
   final taskId = uri?.queryParameters['id'];
   if (taskId == null || taskId.isEmpty) {
@@ -31,5 +31,5 @@ Future<void> handleDayFlowWidgetAction(Uri? uri) async {
     widgets: TaskWidgetService(),
   );
   final issue = await sync.synchronize();
-  if (issue != null) debugPrint('DayFlow widget action: $issue');
+  if (issue != null) debugPrint('Splan widget action: $issue');
 }

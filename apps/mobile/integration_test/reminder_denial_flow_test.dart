@@ -1,8 +1,8 @@
-import 'package:dayflow_mobile/src/application/task_service.dart';
-import 'package:dayflow_mobile/src/platform/mobile_reminder_service.dart';
-import 'package:dayflow_mobile/src/platform/mobile_task_sync.dart';
-import 'package:dayflow_mobile/src/platform/task_widget_service.dart';
-import 'package:dayflow_mobile/src/repo/task_repository.dart';
+import 'package:splan_mobile/src/application/task_service.dart';
+import 'package:splan_mobile/src/platform/mobile_reminder_service.dart';
+import 'package:splan_mobile/src/platform/mobile_task_sync.dart';
+import 'package:splan_mobile/src/platform/task_widget_service.dart';
+import 'package:splan_mobile/src/repo/task_repository.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:integration_test/integration_test.dart';

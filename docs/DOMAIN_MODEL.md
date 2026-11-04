@@ -1,4 +1,4 @@
-# DayFlow Domain Model
+# Splan Domain Model
 
 ## 1. Task identity and fields
 Task is an entity identified by UUID generated at creation. A suggested logical model:

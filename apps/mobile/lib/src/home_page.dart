@@ -89,7 +89,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       builder: (context) => AlertDialog(
         title: const Text('开启任务提醒'),
         content: const Text(
-          '允许通知后，DayFlow 会在定时任务开始前 10 分钟提醒你。'
+          '允许通知后，Splan 会在定时任务开始前 10 分钟提醒你。'
           '系统可能会延迟通知，提醒不会影响任务保存。',
         ),
         actions: [
@@ -111,18 +111,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   Future<void> _openWidgetInstructions() async {
     final instructions = Platform.isIOS
-        ? '在主屏幕长按空白处，点“编辑”>“添加小组件”，搜索 DayFlow，选择尺寸后添加。'
+        ? '在主屏幕长按空白处，点“编辑”>“添加小组件”，搜索 Splan，选择尺寸后添加。'
         : Platform.isAndroid
-            ? '在主屏幕长按空白处，打开“小组件”，找到 DayFlow 后将小组件拖到桌面。'
-            : '请在设备主屏幕的小组件列表中找到 DayFlow 并添加。';
+            ? '在主屏幕长按空白处，打开“小组件”，找到 Splan 后将小组件拖到桌面。'
+            : '请在设备主屏幕的小组件列表中找到 Splan 并添加。';
 
     await showDialog<void>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('添加 DayFlow 小组件'),
+        title: const Text('添加 Splan 小组件'),
         content: Text(
           '$instructions\n\n小组件由系统管理，应用不能自动放到主屏幕。'
-          '打开 DayFlow 后，今日任务和之前未完成的任务会同步到小组件。',
+          '打开 Splan 后，今日任务和之前未完成的任务会同步到小组件。',
         ),
         actions: [
           TextButton(
@@ -153,7 +153,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('DayFlow'),
+        title: const Text('Splan'),
         actions: [
           IconButton(
             icon: Icon(_showHistory ? Icons.today : Icons.history),

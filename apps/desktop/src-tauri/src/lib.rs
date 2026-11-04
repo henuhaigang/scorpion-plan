@@ -275,7 +275,7 @@ fn export_backup(backup: State<BackupService>, app: AppHandle) -> Result<String,
     let backup_dir = BackupService::default_backup_dir(&data_dir);
     std::fs::create_dir_all(&backup_dir).map_err(|e| e.to_string())?;
     let timestamp = chrono::Utc::now().format("%Y%m%d_%H%M%S");
-    let dest = backup_dir.join(format!("dayflow_backup_{}.sqlite", timestamp));
+    let dest = backup_dir.join(format!("splan_backup_{}.sqlite", timestamp));
     let path = backup.export(&dest).map_err(|e| e.to_string())?;
     Ok(path.to_string_lossy().to_string())
 }
@@ -340,7 +340,7 @@ pub fn run() {
 
             let data_dir = app.path().app_data_dir()?;
             std::fs::create_dir_all(&data_dir)?;
-            let db_path = data_dir.join("dayflow.sqlite");
+            let db_path = data_dir.join("splan.sqlite");
 
             let conn = SqliteConnection::open(&db_path)?;
             migrate(&conn)?;
@@ -395,7 +395,7 @@ pub fn run() {
                         .to_string();
                     let report = if let Some(window) = handle.get_webview_window("main") {
                         let script = r#"
-                           window.__dayflowSelfTestResult = '';
+                           window.__splanSelfTestResult = '';
                            (async () => {
                              const result = { ok: false, steps: [] };
                              const invoke = window.__TAURI_INTERNALS__.invoke;
@@ -509,7 +509,7 @@ pub fn run() {
                                  stack: error && error.stack
                                };
                              }
-                             window.__dayflowSelfTestResult = JSON.stringify(result);
+                             window.__splanSelfTestResult = JSON.stringify(result);
                            })();
                          "#
                         .replace("__HOLD_MS__", &hold_ms);
@@ -519,7 +519,7 @@ pub fn run() {
                             std::thread::sleep(std::time::Duration::from_millis(500));
                             let (tx, rx) = std::sync::mpsc::channel();
                             let poll_result = window.eval_with_callback(
-                                "window.__dayflowSelfTestResult || ''",
+                                "window.__splanSelfTestResult || ''",
                                 move |value| {
                                     let _ = tx.send(value);
                                 },

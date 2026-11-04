@@ -36,7 +36,7 @@ class TaskRepository implements TaskStore {
 
   Future<Database> _openDatabase() async {
     final dbPath = await getDatabasesPath();
-    final path = p.join(dbPath, 'dayflow.sqlite');
+    final path = p.join(dbPath, 'splan.sqlite');
     return openDatabase(
       path,
       version: 2,

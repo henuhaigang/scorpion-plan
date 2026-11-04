@@ -29,11 +29,11 @@ jobs:
       - name: Format check
         run: |
           pnpm format:check
-          pnpm --filter dayflow-desktop format:rust:check
+          pnpm --filter splan-desktop format:rust:check
       - name: Lint
         run: pnpm lint
       - name: Typecheck
-        run: pnpm --filter dayflow-desktop exec tsc --noEmit
+        run: pnpm --filter splan-desktop exec tsc --noEmit
       - name: Test
         run: pnpm test
       - name: Build
@@ -59,11 +59,11 @@ jobs:
       - name: Format check
         run: |
           pnpm format:check
-          pnpm --filter dayflow-desktop format:rust:check
+          pnpm --filter splan-desktop format:rust:check
       - name: Lint
         run: pnpm lint
       - name: Typecheck
-        run: pnpm --filter dayflow-desktop exec tsc --noEmit
+        run: pnpm --filter splan-desktop exec tsc --noEmit
       - name: Test
         run: pnpm test
       - name: Build

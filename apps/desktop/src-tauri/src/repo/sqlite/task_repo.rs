@@ -600,7 +600,7 @@ mod tests {
     #[test]
     fn persistence_survives_reopen() {
         let path =
-            std::env::temp_dir().join(format!("dayflow-persistence-{}.sqlite", Uuid::new_v4()));
+            std::env::temp_dir().join(format!("splan-persistence-{}.sqlite", Uuid::new_v4()));
 
         let task_id;
         let reminder_default = GlobalReminderDefault {

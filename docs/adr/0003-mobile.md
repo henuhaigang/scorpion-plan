@@ -14,7 +14,7 @@
   completion uses App Intents on iOS 17 and later. iOS 15–16 users can view the
   widget and open the app but do not get the completion button.
 - iOS widget completion is queued in the App Group and applied to SQLite when
-  DayFlow next becomes active. The persisted queue survives app suspension.
+  Splan next becomes active. The persisted queue survives app suspension.
 - Local reminders are best-effort. Android uses inexact alarms, and neither
   platform promises exact delivery or unrestricted background execution.
 - The mobile app uses a shared Material 3 color scheme; Android AppWidget and

@@ -2,7 +2,7 @@
 
 - Status: Accepted
 - Date: 2026-10-26
-- Deciders: DayFlow engineering (agent-assisted)
+- Deciders: Splan engineering (agent-assisted)
 
 ## Context
 

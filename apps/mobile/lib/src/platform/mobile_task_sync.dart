@@ -33,11 +33,11 @@ class MobileTaskSync {
         final enabled = await _reminders.hasPermission() ||
             await _reminders.requestPermission();
         if (!enabled) {
-          issue = '任务已保存，但通知权限未开启。请在系统设置中允许 DayFlow 发送通知。';
+          issue = '任务已保存，但通知权限未开启。请在系统设置中允许 Splan 发送通知。';
         }
       } else if (_hasUpcomingReminder(tasks) &&
           !await _reminders.hasPermission()) {
-        issue = '定时任务提醒未开启。请允许 DayFlow 发送通知，以接收提前 10 分钟的提醒。';
+        issue = '定时任务提醒未开启。请允许 Splan 发送通知，以接收提前 10 分钟的提醒。';
       }
 
       try {

@@ -1,10 +1,10 @@
-import 'package:dayflow_mobile/src/application/task_service.dart';
-import 'package:dayflow_mobile/src/domain/task.dart';
-import 'package:dayflow_mobile/src/repo/task_repository.dart';
-import 'package:dayflow_mobile/src/home_page.dart';
-import 'package:dayflow_mobile/src/platform/mobile_reminder_service.dart';
-import 'package:dayflow_mobile/src/platform/mobile_task_sync.dart';
-import 'package:dayflow_mobile/src/platform/task_widget_service.dart';
+import 'package:splan_mobile/src/application/task_service.dart';
+import 'package:splan_mobile/src/domain/task.dart';
+import 'package:splan_mobile/src/repo/task_repository.dart';
+import 'package:splan_mobile/src/home_page.dart';
+import 'package:splan_mobile/src/platform/mobile_reminder_service.dart';
+import 'package:splan_mobile/src/platform/mobile_task_sync.dart';
+import 'package:splan_mobile/src/platform/task_widget_service.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
@@ -246,7 +246,7 @@ void main() {
       await tester.tap(find.byTooltip('添加桌面小组件'));
       await tester.pumpAndSettle();
 
-      expect(find.text('添加 DayFlow 小组件'), findsOneWidget);
+      expect(find.text('添加 Splan 小组件'), findsOneWidget);
       expect(find.textContaining('小组件由系统管理'), findsOneWidget);
       expect(find.text('同步小组件数据'), findsOneWidget);
     });

@@ -9,15 +9,15 @@ import 'src/platform/widget_background_callback.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const DayFlowApp());
+  runApp(const SplanApp());
   unawaited(_initializeWidgetIntegration());
 }
 
 Future<void> _initializeWidgetIntegration() async {
   try {
-    await HomeWidget.setAppGroupId(dayFlowAppGroupId);
-    await HomeWidget.registerInteractivityCallback(handleDayFlowWidgetAction);
+    await HomeWidget.setAppGroupId(splanAppGroupId);
+    await HomeWidget.registerInteractivityCallback(handleSplanWidgetAction);
   } catch (error, stackTrace) {
-    debugPrint('DayFlow widget initialization failed: $error\n$stackTrace');
+    debugPrint('Splan widget initialization failed: $error\n$stackTrace');
   }
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'home_page.dart';
 
-class DayFlowApp extends StatelessWidget {
-  const DayFlowApp({super.key});
+class SplanApp extends StatelessWidget {
+  const SplanApp({super.key});
 
   ThemeData _theme(Brightness brightness) {
     const seedColor = Color(0xFF5969D5);
@@ -62,7 +62,7 @@ class DayFlowApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'DayFlow',
+      title: 'Splan',
       debugShowCheckedModeBanner: false,
       theme: _theme(Brightness.light),
       darkTheme: _theme(Brightness.dark),

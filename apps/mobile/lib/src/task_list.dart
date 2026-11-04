@@ -104,7 +104,7 @@ class TaskListState extends State<TaskList> {
         builder: (context) => AlertDialog(
           title: const Text('开启任务提醒'),
           content: const Text(
-            '允许通知后，DayFlow 会在定时任务开始前 10 分钟提醒你。'
+            '允许通知后，Splan 会在定时任务开始前 10 分钟提醒你。'
             '任务仍会正常保存；系统可能会延迟通知。',
           ),
           actions: [

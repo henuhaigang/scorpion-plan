@@ -262,7 +262,7 @@ fn hide_after_blur_event(app: &AppHandle) {
     ));
     let handle = app.clone();
     if let Err(error) = std::thread::Builder::new()
-        .name("dayflow-panel-blur-check".into())
+        .name("splan-panel-blur-check".into())
         .spawn(move || {
             std::thread::sleep(delay);
             maybe_hide_if_unfocused(&handle);
@@ -284,14 +284,14 @@ pub fn setup_tray(app: &AppHandle) -> Result<(), String> {
     let toggle_label = "显示/隐藏面板";
     let toggle_item = MenuItem::with_id(app, "toggle", toggle_label, true, None::<String>)
         .map_err(|e| e.to_string())?;
-    let quit_item = MenuItem::with_id(app, "quit", "退出 DayFlow", true, None::<String>)
+    let quit_item = MenuItem::with_id(app, "quit", "退出 Splan", true, None::<String>)
         .map_err(|e| e.to_string())?;
     let menu = Menu::with_items(app, &[&toggle_item, &quit_item]).map_err(|e| e.to_string())?;
 
     let handle = app.clone();
-    TrayIconBuilder::with_id("dayflow")
+    TrayIconBuilder::with_id("splan")
         .icon(icon)
-        .tooltip("DayFlow")
+        .tooltip("Splan")
         .show_menu_on_left_click(false)
         .menu(&menu)
         .on_menu_event(move |app, event| match event.id().as_ref() {
@@ -497,7 +497,7 @@ fn activate_application(pid: i32) {
 
 #[cfg(not(target_os = "macos"))]
 fn position_near_tray(app: &AppHandle, window: &WebviewWindow) -> Result<(), String> {
-    let Some(tray) = app.tray_by_id("dayflow") else {
+    let Some(tray) = app.tray_by_id("splan") else {
         return window.center().map_err(|e| e.to_string());
     };
 
