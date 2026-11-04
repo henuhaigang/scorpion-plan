@@ -2,6 +2,8 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { invoke } from "@tauri-apps/api/core";
 import * as api from "./api";
 import { TaskRow } from "./TaskRow";
+import { TimeSelect } from "./TimeSelect";
+import { normalizeTimeInput } from "./time";
 import type { HistoryView, Task, TaskBoard, TaskView } from "./types";
 
 type MainView = "board" | "history";
@@ -131,17 +133,13 @@ export default function App() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        if (showQuickAdd) {
-          setShowQuickAdd(false);
-        } else {
-          event.preventDefault();
-          invoke("panel_hide").catch(() => undefined);
-        }
+        event.preventDefault();
+        invoke("panel_hide").catch(() => undefined);
       }
     };
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
-  }, [showQuickAdd]);
+  }, []);
 
   useEffect(() => {
     if (showQuickAdd) {
@@ -186,6 +184,7 @@ export default function App() {
       setError("请输入任务内容");
       return;
     }
+    const time = normalizeTimeInput(draftTime, "10:30") ?? "";
     const id = api.newId();
     try {
       await run(() =>
@@ -193,7 +192,7 @@ export default function App() {
           id,
           title,
           date: draftDate || undefined,
-          time: draftTime || undefined,
+          time: time || undefined,
           allDay: false,
           priority: draftPriority,
         })
@@ -277,13 +276,12 @@ export default function App() {
                 onChange={(event) => setDraftDate(event.target.value)}
               />
             </label>
-            <label className="quick-add-field">
+            <label className="quick-add-field" data-testid="time-field">
               <span>时间</span>
-              <input
-                type="time"
-                step={60}
+              <TimeSelect
                 value={draftTime}
-                onChange={(event) => setDraftTime(event.target.value)}
+                onChange={(value) => setDraftTime(value)}
+                placeholder="10:30"
               />
             </label>
             <label className="quick-add-field">

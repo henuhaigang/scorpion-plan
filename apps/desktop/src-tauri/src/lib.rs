@@ -80,6 +80,13 @@ fn parse_date(raw: &str) -> Result<NaiveDate, String> {
 
 fn parse_time(raw: &str) -> Result<NaiveTime, String> {
     let value = raw.trim();
+    if !value.is_empty() && value.len() <= 2 && value.bytes().all(|byte| byte.is_ascii_digit()) {
+        if let Ok(hour) = value.parse::<u32>() {
+            if let Some(time) = NaiveTime::from_hms_opt(hour, 0, 0) {
+                return Ok(time);
+            }
+        }
+    }
     NaiveTime::parse_from_str(value, "%H:%M")
         .or_else(|_| NaiveTime::parse_from_str(value, "%H:%M:%S"))
         .map_err(|e| format!("invalid time `{raw}`: {e}"))
@@ -302,21 +309,13 @@ fn set_global_reminder_default(
 pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_notification::init())
-        .plugin(
-            tauri_plugin_global_shortcut::Builder::new()
-                .with_handler(|app, _shortcut, event| {
-                    if event.state == tauri_plugin_global_shortcut::ShortcutState::Pressed {
-                        let _ = panel::toggle(app);
-                    }
-                })
-                .build(),
-        )
+        .plugin(tauri_plugin_global_shortcut::Builder::new().build())
         .setup(|app| {
             #[cfg(target_os = "macos")]
             {
                 use objc2::MainThreadMarker;
                 use objc2_app_kit::{NSApplication, NSApplicationActivationPolicy};
-                use tauri_plugin_global_shortcut::GlobalShortcutExt;
+                use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
 
                 let main_thread = MainThreadMarker::new().ok_or_else(|| {
                     std::io::Error::other("macOS application setup must run on the main thread")
@@ -329,8 +328,14 @@ pub fn run() {
                     .into());
                 }
 
-                app.global_shortcut()
-                    .register("CommandOrControl+Shift+Space")?;
+                app.global_shortcut().on_shortcut(
+                    "CommandOrControl+Shift+Space",
+                    |app, _, event| {
+                        if event.state == ShortcutState::Pressed {
+                            let _ = panel::toggle(app);
+                        }
+                    },
+                )?;
             }
 
             let data_dir = app.path().app_data_dir()?;
@@ -467,12 +472,16 @@ pub fn run() {
                                  date: '2026-10-30',
                                  time: ''
                                }));
-                               const timed = await step('reschedule_set_time', () => invoke('reschedule_task', {
+                                                             const timed = await step('reschedule_set_hour_only', () => invoke('reschedule_task', {
                                  id: cleared.id,
                                  expectedVersion: cleared.version,
                                  date: '2026-10-30',
-                                 time: '10:00'
+                                                                 time: '10'
                                }));
+                                                             result.hourOnlyTime = timed.current_schedule.time;
+                                                             if (timed.current_schedule.time.slice(0, 5) !== '10:00') {
+                                                                 throw new Error('hour-only time was not normalized to 10:00');
+                                                             }
                                const board = await step('list_board', () => invoke('list_board'));
                                result.boardTimedCount = board.today.timed.length;
                                await step('soft_delete_created', () => invoke('soft_delete_task', {
@@ -579,6 +588,10 @@ mod tests {
         assert_eq!(
             parse_time(" 09:30:15 ").unwrap(),
             NaiveTime::from_hms_opt(9, 30, 15).unwrap()
+        );
+        assert_eq!(
+            parse_time("10").unwrap(),
+            NaiveTime::from_hms_opt(10, 0, 0).unwrap()
         );
     }
 

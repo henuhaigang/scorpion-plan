@@ -113,7 +113,10 @@ pub fn show(app: &AppHandle) -> Result<(), String> {
     if controller.is_visible() && window.is_visible().unwrap_or(false) {
         controller.begin_show();
         #[cfg(target_os = "macos")]
-        return show_macos_overlay(window);
+        {
+            register_escape_shortcut(app)?;
+            return show_macos_overlay(window);
+        }
         #[cfg(not(target_os = "macos"))]
         return window.set_focus().map_err(|e| e.to_string());
     }
@@ -134,7 +137,12 @@ pub fn show(app: &AppHandle) -> Result<(), String> {
 
     #[cfg(target_os = "macos")]
     {
+        if let Err(error) = register_escape_shortcut(app) {
+            controller.begin_hide();
+            return Err(error);
+        }
         if let Err(error) = show_macos_overlay(window) {
+            unregister_escape_shortcut(app);
             controller.begin_hide();
             return Err(error);
         }
@@ -170,11 +178,44 @@ pub fn hide(app: &AppHandle) -> Result<(), String> {
         }
     }
     #[cfg(target_os = "macos")]
+    unregister_escape_shortcut(app);
+    #[cfg(target_os = "macos")]
     if restore_previous_app {
         let previous_pid = controller.previous_app_pid.swap(0, Ordering::SeqCst);
         activate_application(previous_pid);
     }
     Ok(())
+}
+
+#[cfg(target_os = "macos")]
+fn register_escape_shortcut(app: &AppHandle) -> Result<(), String> {
+    use tauri_plugin_global_shortcut::{GlobalShortcutExt, ShortcutState};
+
+    if app.global_shortcut().is_registered("Escape") {
+        return Ok(());
+    }
+
+    app.global_shortcut()
+        .on_shortcut("Escape", |app, _, event| {
+            if event.state == ShortcutState::Pressed && app.state::<PanelController>().is_visible()
+            {
+                if let Err(error) = hide(app) {
+                    eprintln!("failed to hide panel on Escape: {error}");
+                }
+            }
+        })
+        .map_err(|error| error.to_string())
+}
+
+#[cfg(target_os = "macos")]
+fn unregister_escape_shortcut(app: &AppHandle) {
+    use tauri_plugin_global_shortcut::GlobalShortcutExt;
+
+    if app.global_shortcut().is_registered("Escape") {
+        if let Err(error) = app.global_shortcut().unregister("Escape") {
+            eprintln!("failed to unregister Escape shortcut: {error}");
+        }
+    }
 }
 
 pub fn toggle(app: &AppHandle) -> Result<(), String> {

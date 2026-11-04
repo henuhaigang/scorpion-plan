@@ -9,6 +9,7 @@ Agent must convert applicable scenarios into automated tests and maintain a plat
 - Duplicate titles are allowed.
 - Default date is today in effective calendar timezone; time is null.
 - Time accepts a validated 24-hour value and is normalized consistently.
+- If a client submits only an hour while editing a timed task, preserve its existing minutes; when creating a task with only an hour, use minute `00`.
 - Past scheduled time is allowed and shown overdue; do not silently rewrite it.
 - Task persists across app restart.
 - Double submission creates one task only.
@@ -59,10 +60,11 @@ Agent must convert applicable scenarios into automated tests and maintain a plat
 - Light/dark theme and keyboard navigation work.
 - Test packaged builds, not only dev mode.
 
-## Mobile (later milestone)
+## Mobile
 - Permission granted/denied states are handled.
 - Notifications are best-effort according to OS constraints.
 - Widgets show a useful state and refresh within OS limits.
+- Creating and editing tasks validates dates and times; hour-only input follows the schedule rules above.
 - iOS widget completion is queued in the App Group, applied to SQLite on the
   next synchronization, and removed from the pending queue.
 - Android RemoteViews use only supported view types and render in the launcher
@@ -70,6 +72,8 @@ Agent must convert applicable scenarios into automated tests and maintain a plat
 - Android home-screen widgets can be resized in the launcher; visible task rows
   and the legacy summary adapt to the selected height.
 - No claims of unrestricted background execution.
+
+Mobile local flows, reminder paths, widget snapshot handling, and simulator launches have automated or recorded simulator coverage. Direct home-screen widget placement/tapping, physical devices, and release-signed builds remain separate platform checks; see `docs/V1_RELEASE.md`.
 
 ## Test reporting
 For every scenario report PASS/FAIL/NOT RUN, OS/device, build version, exact command or manual steps, and evidence. A test that cannot be run is NOT RUN, not PASS.

@@ -9,6 +9,12 @@
   --border: #e4e8f0;
   --success: #18875f;
   --danger: #d34f61;
+  --priority-low: #245da8;
+  --priority-low-soft: #e7f0ff;
+  --priority-normal: #1d7838;
+  --priority-normal-soft: #e4f5e8;
+  --priority-high: #ad293c;
+  --priority-high-soft: #ffe6e9;
   --shadow: 0 8px 24px rgb(34 48 78 / 7%);
 }
 
@@ -23,6 +29,12 @@
     --border: #343c4c;
     --success: #67d4a3;
     --danger: #ff8290;
+    --priority-low: #a9c8ff;
+    --priority-low-soft: #263a5c;
+    --priority-normal: #8fe3a1;
+    --priority-normal-soft: #203d28;
+    --priority-high: #ff9aa5;
+    --priority-high-soft: #4b252a;
     --shadow: 0 8px 24px rgb(0 0 0 / 20%);
   }
 }
@@ -139,13 +151,25 @@ body {
   font-size: 12px;
 }
 
-.quick-add-field input {
+.quick-add-field input,
+.quick-add-field select {
+  height: 32px;
   padding: 5px 7px;
   border: 1px solid var(--border);
   border-radius: 7px;
   background: var(--surface);
   color: var(--fg);
   font: inherit;
+}
+
+.quick-add-field select {
+  min-width: 88px;
+  padding-right: 22px;
+}
+
+.quick-add-field input[type="text"] {
+  width: 112px;
+  font-variant-numeric: tabular-nums;
 }
 
 .quick-add-submit {
@@ -366,7 +390,7 @@ body {
 
 .task-row-main {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 8px;
 }
 
@@ -374,7 +398,7 @@ body {
   flex-shrink: 0;
   width: 24px;
   height: 24px;
-  margin-top: 1px;
+  margin-top: 0;
   border: 2px solid var(--border);
   border-radius: 50%;
   background: transparent;
@@ -426,6 +450,8 @@ body {
 }
 
 .task-meta {
+  min-width: 0;
+  flex: 1;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -435,16 +461,41 @@ body {
   font-size: 11px;
 }
 
+.task-row-footer {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 5px;
+}
+
+.task-schedule--nowrap {
+  white-space: nowrap;
+}
+
 .task-priority {
-  padding: 1px 6px;
-  border: 1px solid var(--border);
+  padding: 1px 7px;
+  border: 1px solid transparent;
   border-radius: 999px;
   font-size: 11px;
+  font-weight: 600;
+}
+
+.task-priority--low {
+  border-color: color-mix(in srgb, var(--priority-low) 38%, transparent);
+  background: var(--priority-low-soft);
+  color: var(--priority-low);
+}
+
+.task-priority--normal {
+  border-color: color-mix(in srgb, var(--priority-normal) 38%, transparent);
+  background: var(--priority-normal-soft);
+  color: var(--priority-normal);
 }
 
 .task-priority--high {
-  border-color: var(--danger);
-  color: var(--danger);
+  border-color: color-mix(in srgb, var(--priority-high) 38%, transparent);
+  background: var(--priority-high-soft);
+  color: var(--priority-high);
 }
 
 .task-overdue {
@@ -462,9 +513,10 @@ body {
 
 .task-actions {
   display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 6px;
+  flex-shrink: 0;
+  flex-wrap: nowrap;
+  gap: 5px;
+  margin-left: auto;
 }
 
 .task-actions button {
@@ -489,7 +541,7 @@ body {
 }
 
 .task-delete {
-  margin-left: auto;
+  margin-left: 0;
 }
 
 .task-reschedule,
@@ -501,6 +553,13 @@ body {
   margin-top: 8px;
   padding-top: 8px;
   border-top: 1px solid var(--border);
+}
+
+.task-edit-error {
+  flex-basis: 100%;
+  margin: 0;
+  color: var(--danger);
+  font-size: 11px;
 }
 
 .reschedule-field {
@@ -535,4 +594,67 @@ body {
   font: inherit;
   font-size: 12px;
   cursor: pointer;
+}
+
+.time-select {
+  position: relative;
+  width: 112px;
+}
+
+.time-select-input {
+  width: 100%;
+  height: 32px;
+  padding: 5px 7px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  background: var(--surface);
+  color: var(--fg);
+  font: inherit;
+  font-variant-numeric: tabular-nums;
+}
+
+.time-select-input:focus {
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.time-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 0;
+  padding: 4px;
+  list-style: none;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface);
+  box-shadow: var(--shadow);
+  z-index: 100;
+}
+
+.time-select-option {
+  padding: 6px 8px;
+  border-radius: 5px;
+  cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+
+.time-select-option:hover {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.time-select-option--selected {
+  background: var(--accent);
+  color: #ffffff;
+}
+
+.time-select-empty {
+  padding: 8px;
+  color: var(--muted);
+  font-size: 12px;
+  text-align: center;
 }

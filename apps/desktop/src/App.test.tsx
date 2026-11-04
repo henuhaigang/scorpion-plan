@@ -2,6 +2,8 @@ import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-li
 import { invoke } from "@tauri-apps/api/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
+import { TaskRow } from "./TaskRow";
+import { normalizeTimeInput } from "./time";
 import type { Task, TaskBoard, TaskBucket, TaskView } from "./types";
 
 vi.mock("@tauri-apps/api/core", () => ({
@@ -9,6 +11,39 @@ vi.mock("@tauri-apps/api/core", () => ({
 }));
 
 const mockedInvoke = vi.mocked(invoke);
+
+function getTimeInput(container: HTMLElement): HTMLInputElement {
+  const input = container.querySelector("input");
+  if (!input) throw new Error("Time input not found");
+  return input as HTMLInputElement;
+}
+
+function setTimeValue(container: HTMLElement, value: string) {
+  const input = getTimeInput(container);
+  fireEvent.change(input, { target: { value } });
+}
+
+describe("normalizeTimeInput", () => {
+  it("returns empty string for empty input", () => {
+    expect(normalizeTimeInput("")).toBe("");
+  });
+
+  it("normalizes a valid HH:MM time", () => {
+    expect(normalizeTimeInput("09:30")).toBe("09:30");
+    expect(normalizeTimeInput("9:5")).toBe("09:05");
+  });
+
+  it("uses default minutes when only hour is provided", () => {
+    expect(normalizeTimeInput("11", "10:30")).toBe("11:30");
+    expect(normalizeTimeInput("11", "09:15")).toBe("11:15");
+    expect(normalizeTimeInput("11")).toBe("11:00");
+  });
+
+  it("rejects out-of-range time values", () => {
+    expect(normalizeTimeInput("24:00")).toBeNull();
+    expect(normalizeTimeInput("12:60")).toBeNull();
+  });
+});
 
 let board: TaskBoard = {
   today: { timed: [], untimed: [] },
@@ -130,6 +165,17 @@ describe("App shell", () => {
     expect(mockedInvoke).toHaveBeenCalledWith("panel_hide");
   });
 
+  it("hides the panel on Escape while quick add is open", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByTestId("add-btn"));
+    expect(await screen.findByTestId("draft-input")).toBeInTheDocument();
+
+    fireEvent.keyDown(window, { key: "Escape" });
+
+    expect(mockedInvoke).toHaveBeenCalledWith("panel_hide");
+    expect(screen.getByTestId("draft-input")).toBeInTheDocument();
+  });
+
   it("keeps the panel visible while navigating to history and back", async () => {
     render(<App />);
 
@@ -228,15 +274,49 @@ describe("Quick add", () => {
     fireEvent.change(await screen.findByTestId("draft-input"), {
       target: { value: "定时任务" },
     });
-    const timeInput = screen.getByLabelText("时间");
-    expect(timeInput).toHaveAttribute("step", "60");
-    fireEvent.change(timeInput, { target: { value: "09:30" } });
+    const timeField = screen.getByTestId("time-field");
+    setTimeValue(timeField, "09:30");
     fireEvent.click(screen.getByRole("button", { name: "添加" }));
 
     await waitFor(() => {
       expect(mockedInvoke).toHaveBeenCalledWith(
         "create_task",
         expect.objectContaining({ title: "定时任务", time: "09:30" })
+      );
+    });
+  });
+
+  it("creates a task without time when the time input is empty", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByTestId("add-btn"));
+    fireEvent.change(await screen.findByTestId("draft-input"), {
+      target: { value: "无时间任务" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: "添加" }));
+
+    await waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith(
+        "create_task",
+        expect.objectContaining({ title: "无时间任务", time: undefined })
+      );
+    });
+  });
+
+  it("uses default minutes when user only types the hour in quick add", async () => {
+    render(<App />);
+    fireEvent.click(await screen.findByTestId("add-btn"));
+    fireEvent.change(await screen.findByTestId("draft-input"), {
+      target: { value: "只改小时" },
+    });
+    const timeField = screen.getByTestId("time-field");
+    const mainInput = getTimeInput(timeField);
+    fireEvent.change(mainInput, { target: { value: "11" } });
+    fireEvent.click(screen.getByRole("button", { name: "添加" }));
+
+    await waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith(
+        "create_task",
+        expect.objectContaining({ title: "只改小时", time: "11:30" })
       );
     });
   });
@@ -309,6 +389,105 @@ describe("Lifecycle actions", () => {
   });
 });
 
+describe("Task row layout", () => {
+  it("keeps the time visible beside the date for a legacy timed task", async () => {
+    board = {
+      today: { timed: [], untimed: [] },
+      legacy: [
+        makeView(
+          makeTask({
+            id: "legacy-timed",
+            current_schedule: { date: "2026-10-26", time: "09:30:00", all_day: false },
+          }),
+          "LEGACY"
+        ),
+      ],
+      future: [],
+    };
+    render(<App />);
+
+    const row = await screen.findByTestId("row-legacy-timed");
+    const schedule = within(row).getByText("2026-10-26 09:30");
+    expect(schedule).toHaveClass("task-schedule--nowrap");
+  });
+
+  it("reloads the latest schedule when reopening edit after a task update", async () => {
+    const handlers = {
+      busy: false,
+      onComplete: vi.fn().mockResolvedValue(undefined),
+      onUndo: vi.fn().mockResolvedValue(undefined),
+      onRestore: vi.fn().mockResolvedValue(undefined),
+      onDelete: vi.fn().mockResolvedValue(undefined),
+      onReschedule: vi.fn().mockResolvedValue(makeTask()),
+      onUpdate: vi.fn().mockResolvedValue(makeTask()),
+    };
+    const timedView = makeView(
+      makeTask({
+        id: "legacy-timed",
+        current_schedule: { date: "2026-10-26", time: "09:30:00", all_day: false },
+      }),
+      "LEGACY"
+    );
+    const { rerender } = render(<TaskRow view={timedView} {...handlers} />);
+
+    fireEvent.click(screen.getByRole("button", { name: "编辑" }));
+    fireEvent.click(screen.getByRole("button", { name: "编辑" }));
+
+    const untimedView = makeView(
+      makeTask({
+        id: "legacy-timed",
+        current_schedule: { date: "2026-10-26", time: null, all_day: false },
+      }),
+      "LEGACY"
+    );
+    rerender(<TaskRow view={untimedView} {...handlers} />);
+    fireEvent.click(screen.getByRole("button", { name: "编辑" }));
+
+    expect(getTimeInput(screen.getByTestId("time-field"))).toHaveValue("");
+    expect(screen.getByText("2026-10-26")).toHaveClass("task-schedule--nowrap");
+  });
+
+  it("keeps schedule and priority left of edit and delete actions in one footer", async () => {
+    board = boardWith([
+      makeView(
+        makeTask({
+          id: "t-1",
+          current_schedule: { date: "2026-10-26", time: "09:30:00", all_day: false },
+        })
+      ),
+    ]);
+    render(<App />);
+
+    const row = await screen.findByTestId("row-t-1");
+    const footer = row.querySelector(".task-row-footer");
+    expect(footer).not.toBeNull();
+    expect(footer).toContainElement(within(row).getByText("2026-10-26 09:30"));
+    expect(footer).toContainElement(within(row).getByText("普通"));
+    expect(footer).toContainElement(within(row).getByRole("button", { name: "编辑" }));
+    expect(footer).toContainElement(within(row).getByRole("button", { name: "删除" }));
+  });
+
+  it("shows a distinct priority class for low, normal, and high tasks", async () => {
+    board = boardWith(
+      (["LOW", "NORMAL", "HIGH"] as const).map((priority, index) =>
+        makeView(makeTask({ id: `priority-${index}`, priority }))
+      )
+    );
+    render(<App />);
+
+    await screen.findByTestId("row-priority-0");
+    const expectations = [
+      ["priority-0", "低", "low"],
+      ["priority-1", "普通", "normal"],
+      ["priority-2", "高", "high"],
+    ] as const;
+    for (const [id, label, priorityClass] of expectations) {
+      const priority = within(screen.getByTestId(`row-${id}`)).getByText(label);
+      expect(priority).toHaveClass(`task-priority--${priorityClass}`);
+    }
+  });
+});
+
 describe("Edit (combined form)", () => {
   it("edits a task's title and priority", async () => {
     board = boardWith([makeView(makeTask({ id: "t-1" }))]);
@@ -376,9 +555,8 @@ describe("Edit (combined form)", () => {
     fireEvent.click(await screen.findByRole("button", { name: "编辑" }));
 
     const row = screen.getByTestId("row-t-1");
-    const timeInput = within(row).getByLabelText("时间");
-    expect(timeInput).toHaveAttribute("step", "60");
-    fireEvent.change(timeInput, { target: { value: "10:45" } });
+    const timeField = within(row).getByTestId("time-field");
+    setTimeValue(timeField, "10:45");
     fireEvent.click(within(row).getByRole("button", { name: "保存" }));
 
     await waitFor(() => {
@@ -390,6 +568,76 @@ describe("Edit (combined form)", () => {
           date: "2026-10-26",
           time: "10:45",
         })
+      );
+    });
+  });
+
+  it("clears the time when the time input is emptied", async () => {
+    board = boardWith([
+      makeView(
+        makeTask({
+          id: "t-1",
+          current_schedule: { date: "2026-10-26", time: "09:30:00", all_day: false },
+        })
+      ),
+    ]);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "编辑" }));
+
+    const row = screen.getByTestId("row-t-1");
+    const timeField = within(row).getByTestId("time-field");
+    const mainInput = getTimeInput(timeField);
+    fireEvent.change(mainInput, { target: { value: "" } });
+    fireEvent.click(within(row).getByRole("button", { name: "保存" }));
+
+    await waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith(
+        "reschedule_task",
+        expect.objectContaining({ id: "t-1", time: "" })
+      );
+    });
+  });
+
+  it("preserves task minutes when user only changes the hour in edit", async () => {
+    board = boardWith([
+      makeView(
+        makeTask({
+          id: "t-1",
+          current_schedule: { date: "2026-10-26", time: "10:30:00", all_day: false },
+        })
+      ),
+    ]);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "编辑" }));
+
+    const row = screen.getByTestId("row-t-1");
+    const timeField = within(row).getByTestId("time-field");
+    const mainInput = getTimeInput(timeField);
+    fireEvent.change(mainInput, { target: { value: "11" } });
+    fireEvent.click(within(row).getByRole("button", { name: "保存" }));
+
+    await waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith(
+        "reschedule_task",
+        expect.objectContaining({ id: "t-1", time: "11:30" })
+      );
+    });
+  });
+
+  it("sends a valid time when edited", async () => {
+    board = boardWith([makeView(makeTask({ id: "t-1" }))]);
+    render(<App />);
+    fireEvent.click(await screen.findByRole("button", { name: "编辑" }));
+
+    const row = screen.getByTestId("row-t-1");
+    const timeField = within(row).getByTestId("time-field");
+    setTimeValue(timeField, "14:30");
+    fireEvent.click(within(row).getByRole("button", { name: "保存" }));
+
+    await waitFor(() => {
+      expect(mockedInvoke).toHaveBeenCalledWith(
+        "reschedule_task",
+        expect.objectContaining({ id: "t-1", time: "14:30" })
       );
     });
   });
@@ -407,8 +655,9 @@ describe("Edit (combined form)", () => {
     fireEvent.click(await screen.findByRole("button", { name: "编辑" }));
 
     const row = screen.getByTestId("row-t-1");
-    const timeInput = within(row).getByLabelText("时间");
-    fireEvent.change(timeInput, { target: { value: "" } });
+    const timeField = within(row).getByTestId("time-field");
+    const mainInput = getTimeInput(timeField);
+    fireEvent.change(mainInput, { target: { value: "" } });
     fireEvent.click(within(row).getByRole("button", { name: "保存" }));
 
     await waitFor(() => {

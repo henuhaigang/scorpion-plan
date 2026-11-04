@@ -1,14 +1,13 @@
 # Architecture
 
-## 1. Recommended stack
-- Desktop V1: Tauri 2, React, TypeScript.
-- Native desktop integration: Rust/Tauri commands and maintained official APIs.
-- Mobile later: Flutter.
-- Local DB: SQLite with versioned migrations.
-- Future cloud: Java, Spring Boot, PostgreSQL.
-- Tests: frontend unit tests, Rust tests where useful, integration tests around repositories/use cases, and platform acceptance tests.
+## 1. Implemented stack and future scope
+- Desktop: Tauri 2, React, TypeScript, Rust, and SQLite.
+- Mobile: Flutter/Dart, SQLite, platform notification adapters, Android AppWidget, and iOS WidgetKit.
+- Local databases use versioned migrations; core task operations work offline.
+- Future cloud: Java, Spring Boot, PostgreSQL. Cloud sync is not part of V1.
+- Validation uses frontend and Dart tests, Rust tests, mobile integration tests, and platform acceptance checks where the OS permits them.
 
-This is a recommendation and must be verified by the coding agent against current supported versions and OS behavior before lock-in. Record changes in ADRs.
+Framework and storage decisions are recorded in `docs/adr/`. Builds, simulator evidence, and remaining platform gaps are tracked in `docs/V1_RELEASE.md` and the milestone reports.
 
 ## 2. Layers
 - UI: renders state and forwards user intent.
@@ -19,12 +18,12 @@ This is a recommendation and must be verified by the coding agent against curren
 
 UI must not contain business rules or direct SQL. Domain must not depend on Tauri, React, Flutter, SQLite or OS APIs.
 
-## 3. Desktop structure suggestion
+## 3. Client structure
 - `apps/desktop/` React + TypeScript frontend
 - `apps/desktop/src-tauri/` Rust host and platform integration
-- `packages/domain-ts/` only if shared TypeScript domain code is genuinely useful
-- `docs/` specifications and ADRs
-Do not force cross-language code sharing. Flutter can implement the same documented domain contracts in Dart.
+- `apps/mobile/` Flutter app, Dart application/domain code, and native platform extensions
+- `docs/` specifications, ADRs, and milestone evidence
+Do not force cross-language code sharing. Desktop Rust and mobile Dart implement the documented domain contracts independently.
 
 ## 4. Desktop quick-panel behavior
 - Tray click toggles visibility.

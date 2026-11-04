@@ -1,4 +1,6 @@
 import { useState } from "react";
+import { normalizeTimeInput } from "./time";
+import { TimeSelect } from "./TimeSelect";
 import type { Task, TaskPriority, TaskSchedule, TaskView } from "./types";
 
 export interface TaskRowProps {
@@ -51,6 +53,7 @@ export function TaskRow({
   const [editPriority, setEditPriority] = useState(task.priority);
   const [editDate, setEditDate] = useState(task.current_schedule.date);
   const [editTime, setEditTime] = useState(task.current_schedule.time?.slice(0, 5) ?? "");
+  const [editError, setEditError] = useState<string | null>(null);
 
   const isTodo = task.status === "TODO";
   const isCompleted = task.status === "COMPLETED";
@@ -60,6 +63,16 @@ export function TaskRow({
     void promise.catch(() => undefined);
   };
 
+  const toggleEdit = () => {
+    if (!editOpen) {
+      setEditTitle(task.title);
+      setEditPriority(task.priority);
+      setEditDate(task.current_schedule.date);
+      setEditTime(task.current_schedule.time?.slice(0, 5) ?? "");
+    }
+    setEditOpen((open) => !open);
+  };
+
   const submitEdit = async () => {
     if (!editTitle.trim() || !editDate) {
       return;
@@ -67,7 +80,10 @@ export function TaskRow({
     const titleChanged = editTitle !== task.title;
     const priorityChanged = editPriority !== task.priority;
     const dateChanged = editDate !== task.current_schedule.date;
-    const timeChanged = editTime !== (task.current_schedule.time?.slice(0, 5) ?? "");
+    const currentTime = task.current_schedule.time?.slice(0, 5) ?? "";
+    const normalizedTime = normalizeTimeInput(editTime, currentTime || "10:30") ?? "";
+    setEditError(null);
+    const timeChanged = normalizedTime !== currentTime;
 
     let currentView = view;
     try {
@@ -76,7 +92,7 @@ export function TaskRow({
         currentView = { ...currentView, task: updated };
       }
       if (dateChanged || timeChanged) {
-        await onReschedule(currentView, editDate, editTime);
+        await onReschedule(currentView, editDate, normalizedTime);
       }
     } catch {
       return;
@@ -113,47 +129,52 @@ export function TaskRow({
           <p className={`task-title ${isCompleted || isCanceled ? "task-title--done" : ""}`}>
             {task.title}
           </p>
-          <p className="task-meta">
-            <span className="task-schedule">{formatSchedule(task.current_schedule)}</span>
-            <span className={`task-priority task-priority--${task.priority.toLowerCase()}`}>
-              {PRIORITY_LABEL[task.priority] ?? task.priority}
-            </span>
-            {is_overdue && (
-              <span className="task-overdue" data-testid={`overdue-${task.id}`}>
-                已逾期
-              </span>
-            )}
-            {isCompleted && task.completed_at && (
-              <span className="task-completed-at">完成于 {formatLocalTime(task.completed_at)}</span>
-            )}
-          </p>
         </div>
       </div>
 
-      <div className="task-actions">
-        {isTodo && (
-          <button type="button" disabled={busy} onClick={() => setEditOpen((v) => !v)}>
-            编辑
+      <div className="task-row-footer">
+        <p className="task-meta">
+          <span className="task-schedule task-schedule--nowrap">
+            {formatSchedule(task.current_schedule)}
+          </span>
+          <span className={`task-priority task-priority--${task.priority.toLowerCase()}`}>
+            {PRIORITY_LABEL[task.priority] ?? task.priority}
+          </span>
+          {is_overdue && (
+            <span className="task-overdue" data-testid={`overdue-${task.id}`}>
+              已逾期
+            </span>
+          )}
+          {isCompleted && task.completed_at && (
+            <span className="task-completed-at">完成于 {formatLocalTime(task.completed_at)}</span>
+          )}
+        </p>
+
+        <div className="task-actions">
+          {isTodo && (
+            <button type="button" disabled={busy} onClick={toggleEdit}>
+              编辑
+            </button>
+          )}
+          {isCompleted && (
+            <button type="button" disabled={busy} onClick={() => safe(onUndo(view))}>
+              撤销
+            </button>
+          )}
+          {isCanceled && (
+            <button type="button" disabled={busy} onClick={() => safe(onRestore(view))}>
+              恢复
+            </button>
+          )}
+          <button
+            type="button"
+            className="task-delete"
+            disabled={busy}
+            onClick={() => safe(onDelete(view))}
+          >
+            删除
           </button>
-        )}
-        {isCompleted && (
-          <button type="button" disabled={busy} onClick={() => safe(onUndo(view))}>
-            撤销
-          </button>
-        )}
-        {isCanceled && (
-          <button type="button" disabled={busy} onClick={() => safe(onRestore(view))}>
-            恢复
-          </button>
-        )}
-        <button
-          type="button"
-          className="task-delete"
-          disabled={busy}
-          onClick={() => safe(onDelete(view))}
-        >
-          删除
-        </button>
+        </div>
       </div>
 
       {editOpen && isTodo && (
@@ -192,19 +213,26 @@ export function TaskRow({
                 onChange={(event) => setEditDate(event.target.value)}
               />
             </label>
-            <label className="quick-add-field">
+            <label className="quick-add-field" data-testid="time-field">
               <span>时间</span>
-              <input
-                type="time"
-                step={60}
+              <TimeSelect
                 value={editTime}
-                onChange={(event) => setEditTime(event.target.value)}
+                onChange={(value) => {
+                  setEditTime(value);
+                  setEditError(null);
+                }}
+                placeholder={task.current_schedule.time?.slice(0, 5) || "10:30"}
               />
             </label>
             <button type="submit" className="quick-add-submit" disabled={busy}>
               保存
             </button>
           </div>
+          {editError && (
+            <p className="task-edit-error" role="alert">
+              {editError}
+            </p>
+          )}
         </form>
       )}
     </li>

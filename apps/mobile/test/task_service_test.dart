@@ -79,6 +79,35 @@ void main() {
       expect((await service.loadBoard()).todayTimed, [earlier, later]);
     });
 
+    test('normalizes an hour-only time and preserves minutes when rescheduling',
+        () async {
+      final created = await service.createTask(
+        title: '小时输入',
+        date: '2026-10-30',
+        time: '09:30',
+      );
+      final updated = await service.updateTask(
+        created,
+        title: created.title,
+        date: created.scheduledDate,
+        time: '10',
+        priority: created.priority,
+      );
+
+      expect(updated.scheduledTime, '10:30');
+      expect(updated.version, 2);
+    });
+
+    test('defaults an hour-only new task to minute zero', () async {
+      final created = await service.createTask(
+        title: '小时输入',
+        date: '2026-10-30',
+        time: '9',
+      );
+
+      expect(created.scheduledTime, '09:00');
+    });
+
     test('keeps overdue tasks today and classifies legacy and future tasks',
         () async {
       final overdue = await service.createTask(

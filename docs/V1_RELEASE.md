@@ -2,7 +2,7 @@
 
 ## Date: 2026-11-01
 
-## Status: DESKTOP COMPLETE, MOBILE PARTIAL
+## Status: V1 FEATURES IMPLEMENTED; PLATFORM VERIFICATION PARTIAL
 
 ## Milestones Completed
 
@@ -14,7 +14,7 @@
 | M3 | Task management UI | COMPLETE |
 | M4 | Reminder engine | COMPLETE |
 | M5 | Release hardening | COMPLETE |
-| M6 | Mobile app (Flutter) | PARTIAL — widget placement and physical-device verification remain |
+| M6 | Mobile app (Flutter) | IMPLEMENTED — widget placement and physical-device verification remain |
 | M7 | Cloud sync | OUT OF SCOPE (V1.1+) |
 
 ## Desktop (macOS) — COMPLETE
@@ -23,6 +23,7 @@
 - Tray/menu-bar quick panel with show/hide/quit
 - Task board: Today Timed, Today Untimed, Legacy, Future sections
 - Quick add, edit, reschedule, complete, undo, cancel, restore, soft-delete
+- Hour-only time input preserves the task's existing minutes when editing; new tasks default those minutes to `00`
 - Reminder engine: reconciliation, polling, OS notifications
 - Backup/export to SQLite file
 - Local SQLite persistence with versioned migrations
@@ -31,8 +32,8 @@
 - Light/dark theme, accessibility
 
 ### Test Results
-- **107 Rust tests**: ALL PASS
-- **23 Frontend tests**: ALL PASS
+- **110 Rust tests**: ALL PASS
+- **26 Frontend tests**: ALL PASS
 - **Format check**: PASS
 - **Lint (ESLint + Clippy)**: PASS
 - **TypeScript typecheck**: PASS
@@ -63,12 +64,13 @@ open apps/desktop/src-tauri/target/release/bundle/macos/DayFlow.app
 ~/Library/Application Support/com.dayflow.desktop/backups/
 ```
 
-## Mobile (iOS/Android) — PARTIAL
+## Mobile (iOS/Android) — FEATURES IMPLEMENTED; OS-LEVEL VERIFICATION PARTIAL
 
 ### Implemented
 - Local task flows, SQLite persistence, best-effort reminders, and native Android/iOS widget extensions.
 - The app publishes task snapshots; widgets must be added manually through the OS widget gallery.
 - The app provides platform-specific setup instructions and a control to refresh widget data.
+- Task creation/editing, lifecycle operations, reminder permission states, queued iOS widget completion, and task persistence have unit or simulator integration coverage.
 
 ### Remaining Verification
 - Place and tap widgets on Android/iOS home screens. The Android launcher
@@ -130,14 +132,13 @@ docs/
 - Local-only data storage
 - No secrets in code or logs
 
-## Next Steps (V1.1+)
+## Remaining Verification and Later Work
 
-1. Complete mobile app (build, test, verify on iOS/Android)
-2. Cloud sync design (Java/Spring Boot + PostgreSQL)
-3. Authentication and device registration
-4. Conflict resolution and tombstone propagation
-5. Auto-update (after security review)
-6. Windows/Linux desktop verification
+1. Place and directly interact with Android and iOS home-screen widgets; simulator preview/build coverage does not verify launcher placement or direct taps.
+2. Verify physical devices and release-signed mobile builds.
+3. Verify Windows desktop behavior and packaging.
+4. Design cloud sync (Java/Spring Boot + PostgreSQL), authentication, device registration, conflict resolution, tombstone propagation, and notification ownership before V1.1 implementation.
+5. Consider auto-update only after a security review.
 
 ## Follow-up: Android Startup, Mobile UI, and macOS Dismissal (2026-10-30)
 
@@ -213,3 +214,18 @@ docs/
 - Each prerelease is tagged `main-<run number>-<commit SHA>` and includes the
   artifacts from all four platform jobs. Any failed build or test prevents
   publishing.
+
+## Follow-up: Hour-Only Time Input (2026-11-01)
+
+- Desktop edit submissions normalize an hour-only value while preserving the
+  task's existing minutes. New hour-only values default to `:00`; Rust IPC also
+  accepts the hour-only form directly.
+- The packaged macOS self-test submitted `time: "10"` through Tauri IPC and
+  verified the returned schedule time was `10:00:00`.
+- Validation passed: 26 frontend tests, 110 Rust tests, ESLint, strict Clippy,
+  Prettier check, TypeScript/Vite production build, and macOS app/DMG build.
+- Flutter service normalization and regression tests were added. `flutter test`
+  passed all 20 tests, `flutter analyze` reported no issues, and Dart formatting
+  for the changed files passed. Device integration tests were not rerun for this
+  service-only change; previous Android/iOS integration evidence is listed in
+  `docs/milestones/M6.md`.

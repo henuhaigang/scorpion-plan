@@ -34,7 +34,8 @@ class TaskService {
     TaskPriority priority = TaskPriority.normal,
   }) async {
     final cleanTitle = _validateTitle(title);
-    _validateSchedule(date, time);
+    final normalizedTime = _normalizeTime(time);
+    _validateSchedule(date, normalizedTime);
     final now = _timestamp();
     final task = Task(
       id: _uuid.v4(),
@@ -42,10 +43,10 @@ class TaskService {
       status: TaskStatus.todo,
       priority: priority,
       originalDate: date,
-      originalTime: time,
+      originalTime: normalizedTime,
       originalIsAllDay: false,
       scheduledDate: date,
-      scheduledTime: time,
+      scheduledTime: normalizedTime,
       isAllDay: false,
       reminderMode: ReminderPreference.inheritDefault,
       reminderMinutesBefore: null,
@@ -68,13 +69,15 @@ class TaskService {
   }) async {
     _ensureTodo(task);
     final cleanTitle = _validateTitle(title);
-    _validateSchedule(date, time);
+    final normalizedTime =
+        _normalizeTime(time, fallbackTime: task.scheduledTime);
+    _validateSchedule(date, normalizedTime);
     return _save(task.copyWith(
       title: cleanTitle,
       priority: priority,
       scheduledDate: date,
-      scheduledTime: time,
-      clearScheduledTime: time == null,
+      scheduledTime: normalizedTime,
+      clearScheduledTime: normalizedTime == null,
     ));
   }
 
@@ -140,6 +143,16 @@ class TaskService {
   }
 
   String _timestamp() => _now().toUtc().toIso8601String();
+
+  String? _normalizeTime(String? time, {String? fallbackTime}) {
+    if (time == null) return null;
+    final hourOnly = RegExp(r'^([01]?\d|2[0-3]):?$').firstMatch(time);
+    if (hourOnly == null) return time;
+    final previousMinutes =
+        RegExp(r'^\d{2}:([0-5]\d)$').firstMatch(fallbackTime ?? '')?.group(1) ??
+            '00';
+    return '${hourOnly.group(1)!.padLeft(2, '0')}:$previousMinutes';
+  }
 
   String _validateTitle(String value) {
     final title = value.trim();
