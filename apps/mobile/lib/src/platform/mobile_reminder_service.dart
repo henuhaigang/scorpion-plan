@@ -1,9 +1,6 @@
 import 'dart:io';
 
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_timezone/flutter_timezone.dart';
-import 'package:timezone/data/latest.dart' as tz_data;
-import 'package:timezone/timezone.dart' as tz;
 
 import '../domain/task.dart';
 
@@ -11,7 +8,6 @@ class MobileReminderService {
   final FlutterLocalNotificationsPlugin _notifications;
   final DateTime Function() _now;
   bool _initialized = false;
-  String? _timezoneIdentifier;
 
   MobileReminderService({
     FlutterLocalNotificationsPlugin? notifications,
@@ -20,12 +16,6 @@ class MobileReminderService {
         _now = now ?? DateTime.now;
 
   Future<void> initialize() async {
-    tz_data.initializeTimeZones();
-    final timezone = await FlutterTimezone.getLocalTimezone();
-    if (_timezoneIdentifier != timezone.identifier) {
-      tz.setLocalLocation(tz.getLocation(timezone.identifier));
-      _timezoneIdentifier = timezone.identifier;
-    }
     if (_initialized) return;
 
     await _notifications.initialize(
@@ -111,11 +101,11 @@ class MobileReminderService {
     for (final entry in desired.entries) {
       final (task, fireAt) = entry.value;
       await _notifications.cancel(entry.key);
-      await _notifications.zonedSchedule(
+      await _notifications.schedule(
         entry.key,
         '任务提醒',
         task.title,
-        tz.TZDateTime.from(fireAt, tz.local),
+        fireAt,
         const NotificationDetails(
           android: AndroidNotificationDetails(
             'task_reminders',
