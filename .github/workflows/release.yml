@@ -41,6 +41,8 @@ jobs:
             printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore"
             echo "ANDROID_KEYSTORE_PATH=$keystore" >> "$GITHUB_ENV"
             echo "signed=true" >> "$GITHUB_OUTPUT"
+          elif [[ -f "apps/mobile/android/keystore/splan-release.jks" ]]; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
           else
             echo "signed=false" >> "$GITHUB_OUTPUT"
           fi
@@ -58,7 +60,10 @@ jobs:
             "$RUNNER_TEMP/release-assets/Splan-Android.apk"
           cp build/app/outputs/bundle/release/app-release.aab \
             "$RUNNER_TEMP/release-assets/Splan-Android.aab"
-          if [[ "${{ steps.android-signing.outputs.signed }}" != "true" ]]; then
+          if [[ "${{ steps.android-signing.outputs.signed }}" == "true" ]]; then
+            printf '%s\n' "Signed using available Android keystore." \
+              > "$RUNNER_TEMP/release-assets/Android-SIGNING-STATUS.txt"
+          else
             printf '%s\n' "Unsigned: configure Android signing secrets to produce distributable packages." \
               > "$RUNNER_TEMP/release-assets/Android-SIGNING-STATUS.txt"
           fi
