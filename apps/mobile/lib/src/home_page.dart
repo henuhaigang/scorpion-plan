@@ -153,29 +153,74 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Splan'),
+        titleSpacing: 20,
+        title: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primaryContainer,
+                borderRadius: BorderRadius.circular(14),
+              ),
+              child: Icon(
+                Icons.check_rounded,
+                color: Theme.of(context).colorScheme.primary,
+                size: 23,
+              ),
+            ),
+            const SizedBox(width: 10),
+            const Text('Splan'),
+          ],
+        ),
         actions: [
           IconButton(
-            icon: Icon(_showHistory ? Icons.today : Icons.history),
+            icon: Icon(
+              _showHistory ? Icons.today_rounded : Icons.history_rounded,
+            ),
             onPressed: () => setState(() => _showHistory = !_showHistory),
             tooltip: _showHistory ? '任务' : '历史',
           ),
           IconButton(
-            icon: const Icon(Icons.add),
+            icon: const Icon(Icons.add_rounded),
             onPressed: () => _taskListKey.currentState?.showQuickAdd(),
             tooltip: '添加任务',
           ),
-          if (_reminders != null)
-            IconButton(
-              icon: const Icon(Icons.notifications_active_outlined),
-              onPressed: _openReminderPermissionDialog,
-              tooltip: '开启任务提醒',
-            ),
-          if (_platformSync != null)
-            IconButton(
-              icon: const Icon(Icons.widgets_outlined),
-              onPressed: _openWidgetInstructions,
-              tooltip: '添加桌面小组件',
+          if (_reminders != null || _platformSync != null)
+            PopupMenuButton<String>(
+              tooltip: '更多',
+              icon: const Icon(Icons.more_vert_rounded),
+              onSelected: (value) {
+                if (value == 'reminders') {
+                  _openReminderPermissionDialog();
+                } else if (value == 'widget') {
+                  _openWidgetInstructions();
+                }
+              },
+              itemBuilder: (context) => [
+                if (_reminders != null)
+                  const PopupMenuItem(
+                    value: 'reminders',
+                    child: Row(
+                      children: [
+                        Icon(Icons.notifications_active_outlined),
+                        SizedBox(width: 12),
+                        Text('开启任务提醒'),
+                      ],
+                    ),
+                  ),
+                if (_platformSync != null)
+                  const PopupMenuItem(
+                    value: 'widget',
+                    child: Row(
+                      children: [
+                        Icon(Icons.widgets_outlined),
+                        SizedBox(width: 12),
+                        Text('添加桌面小组件'),
+                      ],
+                    ),
+                  ),
+              ],
             ),
         ],
       ),

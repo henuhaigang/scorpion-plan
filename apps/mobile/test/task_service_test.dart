@@ -243,7 +243,9 @@ void main() {
         ),
       );
       await tester.pumpAndSettle();
-      await tester.tap(find.byTooltip('添加桌面小组件'));
+      await tester.tap(find.byTooltip('更多'));
+      await tester.pumpAndSettle();
+      await tester.tap(find.text('添加桌面小组件'));
       await tester.pumpAndSettle();
 
       expect(find.text('添加 Splan 小组件'), findsOneWidget);

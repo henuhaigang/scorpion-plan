@@ -170,17 +170,46 @@ class TaskListState extends State<TaskList> {
   @override
   Widget build(BuildContext context) {
     if (_loading) {
-      return const Center(child: CircularProgressIndicator());
+      return Center(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const CircularProgressIndicator.adaptive(),
+            const SizedBox(height: 14),
+            Text(
+              '正在整理你的任务…',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: Theme.of(context).colorScheme.onSurfaceVariant,
+                  ),
+            ),
+          ],
+        ),
+      );
     }
     if (_error != null) {
       return Center(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text('无法加载任务'),
+            Icon(
+              Icons.error_outline_rounded,
+              size: 36,
+              color: Theme.of(context).colorScheme.error,
+            ),
+            const SizedBox(height: 12),
+            Text(
+              '无法加载任务',
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             Padding(
-              padding: const EdgeInsets.all(16),
-              child: Text(_error!, textAlign: TextAlign.center),
+              padding: const EdgeInsets.all(20),
+              child: Text(
+                _error!,
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: Theme.of(context).colorScheme.onSurfaceVariant,
+                    ),
+              ),
             ),
             FilledButton(onPressed: _load, child: const Text('重试')),
           ],
@@ -189,56 +218,207 @@ class TaskListState extends State<TaskList> {
     }
     if (widget.showHistory) {
       final items = _history ?? const <Task>[];
-      if (items.isEmpty) return const Center(child: Text('暂无历史记录'));
-      return _taskList(items);
+      if (items.isEmpty) {
+        return Center(
+          child: _emptyState(
+            Icons.history_rounded,
+            '暂无历史记录',
+            '完成或取消的任务会显示在这里',
+          ),
+        );
+      }
+      return ListView(
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 24),
+        children: [
+          _section('历史记录', Icons.history_rounded, items),
+        ],
+      );
     }
 
     final board = _board;
     if (board == null) return const SizedBox.shrink();
-    if (board.todayTimed.isEmpty &&
-        board.todayUntimed.isEmpty &&
-        board.legacy.isEmpty &&
-        board.future.isEmpty) {
-      return const Center(
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Icon(Icons.task_alt, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
-            Text('今天还没有任务'),
-            SizedBox(height: 8),
-            Text('点击右上角 + 添加任务'),
-          ],
-        ),
-      );
-    }
-
     return RefreshIndicator(
       onRefresh: _load,
       child: ListView(
-        padding: const EdgeInsets.only(top: 4, bottom: 24),
+        physics: const AlwaysScrollableScrollPhysics(),
+        padding: const EdgeInsets.fromLTRB(16, 8, 16, 28),
         children: [
-          _section('今日', board.todayTimed, board: board),
-          _section('待安排', board.todayUntimed, board: board),
-          if (board.legacy.isNotEmpty)
-            ExpansionTile(
-              title: Text('之前未完成 (${board.legacy.length})'),
-              children: [_taskList(board.legacy, board: board)],
+          _todayOverview(board),
+          if (board.todayTimed.isEmpty &&
+              board.todayUntimed.isEmpty &&
+              board.legacy.isEmpty &&
+              board.future.isEmpty)
+            _emptyState(
+              Icons.wb_sunny_outlined,
+              '今天还没有安排',
+              '先记下一件最重要的事，其他的慢慢来',
             ),
-          _section('未来', board.future, board: board),
+          _section(
+            '定时任务',
+            Icons.schedule_rounded,
+            board.todayTimed,
+            board: board,
+          ),
+          _section(
+            '待安排',
+            Icons.event_note_rounded,
+            board.todayUntimed,
+            board: board,
+          ),
+          if (board.legacy.isNotEmpty)
+            Card(
+              clipBehavior: Clip.antiAlias,
+              child: ExpansionTile(
+                leading: Icon(
+                  Icons.history_rounded,
+                  color: Theme.of(context).colorScheme.onSurfaceVariant,
+                ),
+                title: const Text('之前未完成'),
+                subtitle: Text('${board.legacy.length} 项任务'),
+                children: [_taskList(board.legacy, board: board)],
+              ),
+            ),
+          _section(
+            '接下来',
+            Icons.upcoming_outlined,
+            board.future,
+            board: board,
+          ),
         ],
       ),
     );
   }
 
-  Widget _section(String title, List<Task> tasks, {TaskBoard? board}) {
+  Widget _todayOverview(TaskBoard board) {
+    final date = board.observedAt;
+    const weekdays = ['一', '二', '三', '四', '五', '六', '日'];
+    final count = board.todayTimed.length + board.todayUntimed.length;
+    final colors = Theme.of(context).colorScheme;
+
+    return Container(
+      margin: const EdgeInsets.only(bottom: 12),
+      padding: const EdgeInsets.all(22),
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+          colors: [
+            colors.primary,
+            Color.lerp(colors.primary, colors.tertiary, 0.28)!,
+          ],
+        ),
+        borderRadius: BorderRadius.circular(24),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '星期${weekdays[date.weekday - 1]} · ${date.month}月${date.day}日',
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: colors.onPrimary.withValues(alpha: 0.82),
+                        fontWeight: FontWeight.w500,
+                      ),
+                ),
+                const SizedBox(height: 14),
+                Text(
+                  '今天，按自己的节奏来',
+                  style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                        color: colors.onPrimary,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: -0.5,
+                      ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  count == 0 ? '今天留白，正好喘口气' : '今天有 $count 项安排',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: colors.onPrimary.withValues(alpha: 0.84),
+                      ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            width: 42,
+            height: 42,
+            decoration: BoxDecoration(
+              color: colors.onPrimary.withValues(alpha: 0.14),
+              borderRadius: BorderRadius.circular(15),
+            ),
+            child: Icon(
+              Icons.wb_sunny_rounded,
+              color: colors.onPrimary,
+              size: 22,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _emptyState(IconData icon, String title, String subtitle) {
+    final colors = Theme.of(context).colorScheme;
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 28),
+        child: Column(
+          children: [
+            Container(
+              width: 54,
+              height: 54,
+              decoration: BoxDecoration(
+                color: colors.primaryContainer,
+                borderRadius: BorderRadius.circular(19),
+              ),
+              child: Icon(icon, color: colors.primary, size: 27),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              title,
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    fontWeight: FontWeight.w700,
+                  ),
+            ),
+            const SizedBox(height: 6),
+            Text(
+              subtitle,
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: colors.onSurfaceVariant,
+                  ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _section(
+    String title,
+    IconData icon,
+    List<Task> tasks, {
+    TaskBoard? board,
+  }) {
+    if (tasks.isEmpty) return const SizedBox.shrink();
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Padding(
-          padding: const EdgeInsets.fromLTRB(20, 18, 20, 10),
+          padding: const EdgeInsets.fromLTRB(4, 16, 4, 10),
           child: Row(
             children: [
+              Icon(
+                icon,
+                size: 19,
+                color: Theme.of(context).colorScheme.primary,
+              ),
+              const SizedBox(width: 8),
               Text(
                 title,
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -250,13 +430,13 @@ class TaskListState extends State<TaskList> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).colorScheme.primaryContainer,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
                   '${tasks.length}',
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: Theme.of(context).colorScheme.onPrimaryContainer,
+                        color: Theme.of(context).colorScheme.onSurfaceVariant,
                         fontWeight: FontWeight.w700,
                       ),
                 ),
@@ -264,32 +444,30 @@ class TaskListState extends State<TaskList> {
             ],
           ),
         ),
-        if (tasks.isEmpty)
-          Padding(
-            padding: const EdgeInsets.fromLTRB(20, 0, 20, 4),
-            child: Text(
-              '暂无任务',
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: Theme.of(context).colorScheme.onSurfaceVariant,
-                  ),
-            ),
-          )
-        else
-          _taskList(tasks, board: board),
+        _taskList(tasks, board: board),
       ],
     );
   }
 
   Widget _taskList(List<Task> tasks, {TaskBoard? board}) {
+    final today = board?.observedAt;
+    final todayDate = today == null
+        ? null
+        : '${today.year.toString().padLeft(4, '0')}-'
+            '${today.month.toString().padLeft(2, '0')}-'
+            '${today.day.toString().padLeft(2, '0')}';
+
     return Column(
       children: tasks
           .map(
             (task) => Padding(
-              padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+              padding: const EdgeInsets.only(bottom: 8),
               child: Card(
+                clipBehavior: Clip.antiAlias,
                 child: _TaskTile(
                   task: task,
                   overdue: board?.isOverdue(task) ?? false,
+                  isToday: task.scheduledDate == todayDate,
                   busy: _busy,
                   onComplete: () => _complete(task),
                   onEdit: () => _showTaskEditor(task),
@@ -308,6 +486,7 @@ class TaskListState extends State<TaskList> {
 class _TaskTile extends StatelessWidget {
   final Task task;
   final bool overdue;
+  final bool isToday;
   final bool busy;
   final VoidCallback onComplete;
   final VoidCallback onEdit;
@@ -318,6 +497,7 @@ class _TaskTile extends StatelessWidget {
   const _TaskTile({
     required this.task,
     required this.overdue,
+    required this.isToday,
     required this.busy,
     required this.onComplete,
     required this.onEdit,
@@ -329,9 +509,16 @@ class _TaskTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isTodo = task.status == TaskStatus.todo;
+    final colors = Theme.of(context).colorScheme;
+    final scheduledDate = DateTime.parse(task.scheduledDate);
+    final scheduleLabel = isToday
+        ? task.scheduledTime ?? '待安排'
+        : '${scheduledDate.month}月${scheduledDate.day}日'
+            '${task.scheduledTime == null ? '' : ' · ${task.scheduledTime}'}';
+
     return ListTile(
-      visualDensity: const VisualDensity(vertical: -1),
-      contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 1),
+      minVerticalPadding: 13,
+      contentPadding: const EdgeInsets.fromLTRB(12, 4, 8, 4),
       leading: Checkbox(
         value: task.status == TaskStatus.completed,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
@@ -344,24 +531,46 @@ class _TaskTile extends StatelessWidget {
         maxLines: 2,
         overflow: TextOverflow.ellipsis,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          fontWeight: FontWeight.w600,
-          decoration: isTodo ? null : TextDecoration.lineThrough,
-        ),
+              fontWeight: FontWeight.w600,
+              decoration: isTodo ? null : TextDecoration.lineThrough,
+              color: isTodo ? colors.onSurface : colors.onSurfaceVariant,
+            ),
       ),
       subtitle: Padding(
-        padding: const EdgeInsets.only(top: 3),
-        child: Text(
-          '${task.scheduledDate}${task.scheduledTime == null ? '' : ' ${task.scheduledTime}'}'
-          '${overdue ? ' · 已逾期' : ''}',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                color: overdue
-                    ? Theme.of(context).colorScheme.error
-                    : Theme.of(context).colorScheme.onSurfaceVariant,
+        padding: const EdgeInsets.only(top: 8),
+        child: Wrap(
+          spacing: 6,
+          runSpacing: 5,
+          children: [
+            _TaskPill(
+              icon: task.scheduledTime == null
+                  ? Icons.event_note_outlined
+                  : Icons.schedule_rounded,
+              label: scheduleLabel,
+              foreground: colors.onSurfaceVariant,
+              background: colors.surfaceContainerHighest,
+            ),
+            if (task.priority == TaskPriority.high)
+              _TaskPill(
+                icon: Icons.flag_rounded,
+                label: '高优先级',
+                foreground: colors.tertiary,
+                background: colors.tertiaryContainer,
               ),
+            if (overdue)
+              _TaskPill(
+                icon: Icons.error_outline_rounded,
+                label: '已逾期',
+                foreground: colors.error,
+                background: colors.errorContainer,
+              ),
+          ],
         ),
       ),
       trailing: PopupMenuButton<String>(
         enabled: !busy,
+        tooltip: '任务操作',
+        icon: const Icon(Icons.more_horiz_rounded),
         onSelected: (value) {
           switch (value) {
             case 'edit':
@@ -386,6 +595,45 @@ class _TaskTile extends StatelessWidget {
           if (task.status == TaskStatus.canceled)
             const PopupMenuItem(value: 'restore', child: Text('恢复任务')),
           const PopupMenuItem(value: 'delete', child: Text('删除')),
+        ],
+      ),
+    );
+  }
+}
+
+class _TaskPill extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color foreground;
+  final Color background;
+
+  const _TaskPill({
+    required this.icon,
+    required this.label,
+    required this.foreground,
+    required this.background,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: background,
+        borderRadius: BorderRadius.circular(9),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: foreground),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: foreground,
+                  fontWeight: FontWeight.w600,
+                ),
+          ),
         ],
       ),
     );
