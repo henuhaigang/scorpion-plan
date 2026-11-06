@@ -1,4 +1,4 @@
-import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { invoke } from "@tauri-apps/api/core";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
@@ -185,6 +185,39 @@ describe("App shell", () => {
     fireEvent.click(screen.getByRole("button", { name: "← 返回" }));
     expect(await screen.findByRole("heading", { name: "今日" })).toBeInTheDocument();
     expect(mockedInvoke).not.toHaveBeenCalledWith("panel_hide");
+  });
+
+  it("refreshes the board when the local date changes while the panel stays open", async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const start = new Date();
+    start.setHours(23, 59, 30, 0);
+    vi.setSystemTime(start);
+    let listBoardCalls = 0;
+
+    mockedInvoke.mockImplementation((command: string) => {
+      if (command === "load_draft") return Promise.resolve("");
+      if (command === "list_board") {
+        listBoardCalls += 1;
+        return Promise.resolve(board);
+      }
+      return Promise.resolve();
+    });
+
+    render(<App />);
+    await screen.findByRole("heading", { name: "今日" });
+    const initialCalls = listBoardCalls;
+
+    vi.setSystemTime(
+      new Date(start.getFullYear(), start.getMonth(), start.getDate() + 1, 0, 0, 30, 0)
+    );
+    await act(async () => {
+      await vi.advanceTimersByTimeAsync(30_000);
+    });
+
+    await waitFor(() => {
+      expect(listBoardCalls).toBeGreaterThan(initialCalls);
+    });
+    vi.useRealTimers();
   });
 });
 

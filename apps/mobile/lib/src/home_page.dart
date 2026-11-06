@@ -27,11 +27,18 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   MobileTaskSync? _platformSync;
   bool _showHistory = false;
   String? _platformIssue;
+  Timer? _dateRolloverTimer;
+  String? _lastLocalDate;
 
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    _lastLocalDate = _localDateKey(DateTime.now());
+    _dateRolloverTimer = Timer.periodic(
+      const Duration(seconds: 30),
+      (_) => unawaited(_handleDateRollover()),
+    );
     if (widget.service == null) {
       final repository = TaskRepository();
       _service = TaskService(repository);
@@ -55,6 +62,7 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
 
   @override
   void dispose() {
+    _dateRolloverTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -62,11 +70,26 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
+      _lastLocalDate = _localDateKey(DateTime.now());
       unawaited(_synchronize().then((_) async {
         await _taskListKey.currentState?.refresh();
       }));
     }
   }
+
+  Future<void> _handleDateRollover() async {
+    final current = _localDateKey(DateTime.now());
+    if (current == _lastLocalDate || !mounted) return;
+    _lastLocalDate = current;
+    unawaited(_synchronize().then((_) async {
+      await _taskListKey.currentState?.refresh();
+    }));
+  }
+
+  String _localDateKey(DateTime now) =>
+      '${now.year.toString().padLeft(4, '0')}-'
+      '${now.month.toString().padLeft(2, '0')}-'
+      '${now.day.toString().padLeft(2, '0')}';
 
   Future<String?> _synchronize({
     bool requestNotificationPermission = false,
