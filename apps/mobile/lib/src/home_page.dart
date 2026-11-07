@@ -27,6 +27,8 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   MobileTaskSync? _platformSync;
   bool _showHistory = false;
   String? _platformIssue;
+  Timer? _calendarRefreshTimer;
+  late String _observedDate;
 
   @override
   void initState() {
@@ -51,10 +53,16 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
       _service = widget.service!;
       _platformSync = widget.platformSync;
     }
+    _observedDate = _service.todayDate();
+    _calendarRefreshTimer = Timer.periodic(
+      const Duration(minutes: 1),
+      (_) => _refreshIfCalendarDateChanged(),
+    );
   }
 
   @override
   void dispose() {
+    _calendarRefreshTimer?.cancel();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
   }
@@ -62,10 +70,21 @@ class _HomePageState extends State<HomePage> with WidgetsBindingObserver {
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
     if (state == AppLifecycleState.resumed) {
-      unawaited(_synchronize().then((_) async {
-        await _taskListKey.currentState?.refresh();
-      }));
+      _observedDate = _service.todayDate();
+      unawaited(_refreshBoard());
     }
+  }
+
+  void _refreshIfCalendarDateChanged() {
+    final date = _service.todayDate();
+    if (date == _observedDate) return;
+    _observedDate = date;
+    unawaited(_refreshBoard());
+  }
+
+  Future<void> _refreshBoard() async {
+    await _synchronize();
+    await _taskListKey.currentState?.refresh();
   }
 
   Future<String?> _synchronize({

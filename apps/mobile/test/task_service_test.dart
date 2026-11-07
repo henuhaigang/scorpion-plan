@@ -228,6 +228,28 @@ void main() {
       expect((await service.loadBoard()).todayUntimed.single.title, '模拟器任务');
     });
 
+    testWidgets('refreshes the task board when the local date changes',
+        (tester) async {
+      var now = DateTime(2026, 10, 30, 23, 59);
+      final dayService = TaskService(store, now: () => now);
+      await dayService.createTask(title: '跨日任务', date: '2026-10-30');
+
+      await tester.pumpWidget(
+        MaterialApp(home: HomePage(service: dayService)),
+      );
+      await tester.pumpAndSettle();
+      expect(find.text('星期五 · 10月30日'), findsOneWidget);
+      expect(find.text('待安排'), findsWidgets);
+
+      now = DateTime(2026, 10, 31, 0, 1);
+      await tester.pump(const Duration(minutes: 1));
+      await tester.pumpAndSettle();
+
+      expect(find.text('星期六 · 10月31日'), findsOneWidget);
+      expect(find.text('待安排'), findsNothing);
+      expect(find.text('之前未完成'), findsOneWidget);
+    });
+
     testWidgets('shows instructions for adding a home-screen widget',
         (tester) async {
       await tester.pumpWidget(
