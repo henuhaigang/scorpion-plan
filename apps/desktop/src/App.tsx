@@ -71,6 +71,7 @@ export default function App() {
   const draftRef = useRef(draft);
   draftRef.current = draft;
   const quickAddRef = useRef<HTMLTextAreaElement>(null);
+  const boardDateRef = useRef(todayISO());
 
   const saveDraft = useCallback((value: string) => {
     if (saveTimer.current !== null) {
@@ -121,6 +122,35 @@ export default function App() {
 
     return () => {
       active = false;
+    };
+  }, [refresh]);
+
+  useEffect(() => {
+    const dateChanged = () => {
+      const date = todayISO();
+      if (date === boardDateRef.current) {
+        return false;
+      }
+      boardDateRef.current = date;
+      return true;
+    };
+    const handleDateChange = () => {
+      if (dateChanged()) {
+        void refresh();
+      }
+    };
+    const handleVisible = () => {
+      if (document.visibilityState === "visible" && dateChanged()) {
+        void refresh();
+      }
+    };
+    const interval = window.setInterval(handleDateChange, 30_000);
+    document.addEventListener("visibilitychange", handleVisible);
+    window.addEventListener("focus", handleVisible);
+    return () => {
+      window.clearInterval(interval);
+      document.removeEventListener("visibilitychange", handleVisible);
+      window.removeEventListener("focus", handleVisible);
     };
   }, [refresh]);
 
