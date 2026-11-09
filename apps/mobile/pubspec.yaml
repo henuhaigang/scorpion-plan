@@ -2,6 +2,7 @@ name: splan_mobile
 description: Splan — local-first personal task and schedule app (mobile)
 publish_to: "none"
 version: 0.1.0
+license: ../../LICENSE
 
 environment:
   sdk: ">=3.0.0 <4.0.0"

@@ -5,15 +5,14 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val localKeystoreFile = rootProject.file("keystore/splan-release.jks")
 val envKeystorePath = providers.environmentVariable("ANDROID_KEYSTORE_PATH").orNull
+    ?: localKeystoreFile.takeIf { it.exists() }?.absolutePath
 val envStorePassword = providers.environmentVariable("ANDROID_STORE_PASSWORD").orNull
 val envKeyAlias = providers.environmentVariable("ANDROID_KEY_ALIAS").orNull
 val envKeyPassword = providers.environmentVariable("ANDROID_KEY_PASSWORD").orNull
 val hasEnvSigning = listOf(envKeystorePath, envStorePassword, envKeyAlias, envKeyPassword)
     .all { !it.isNullOrBlank() }
-
-val localKeystoreFile = rootProject.file("keystore/splan-release.jks")
-val hasLocalKeystore = localKeystoreFile.exists()
 
 android {
     namespace = "com.splan.splan_mobile"
@@ -48,13 +47,6 @@ android {
                 storePassword = requireNotNull(envStorePassword)
                 keyAlias = requireNotNull(envKeyAlias)
                 keyPassword = requireNotNull(envKeyPassword)
-            }
-        } else if (hasLocalKeystore) {
-            create("release") {
-                storeFile = localKeystoreFile
-                storePassword = "splan2025"
-                keyAlias = "splan"
-                keyPassword = "splan2025"
             }
         }
     }

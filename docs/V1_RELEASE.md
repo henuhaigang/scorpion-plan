@@ -1,8 +1,13 @@
 # Splan V1.0 Release Summary
 
-## Date: 2026-11-01
+## Date: 2026-11-01; latest follow-up 2026-11-09
 
 ## Status: V1 FEATURES IMPLEMENTED; PLATFORM VERIFICATION PARTIAL
+
+## License
+
+Splan is released under the Apache License 2.0. The full license text is in
+the repository root `LICENSE` file.
 
 ## Milestones Completed
 
@@ -14,7 +19,7 @@
 | M3 | Task management UI | COMPLETE |
 | M4 | Reminder engine | COMPLETE |
 | M5 | Release hardening | COMPLETE |
-| M6 | Mobile app (Flutter) | IMPLEMENTED — widget placement and physical-device verification remain |
+| M6 | Mobile app (Flutter) | IMPLEMENTED — date rollover refresh added; widget placement and physical-device verification remain |
 | M7 | Cloud sync | OUT OF SCOPE (V1.1+) |
 
 ## Desktop (macOS) — COMPLETE
@@ -204,10 +209,21 @@ docs/
   each push to `main`. It packages a macOS DMG,
   Windows MSI/NSIS installers, Android APK/AAB, and an unsigned iOS Simulator
   debug app archive.
-- Android artifacts are unsigned unless `ANDROID_KEYSTORE_BASE64`,
-  `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and `ANDROID_KEY_PASSWORD`
-  are configured as GitHub Secrets. The workflow never signs release APKs
-  with the debug key.
+- Android artifacts are signed when a keystore is available and the required
+  signing values are provided through the environment. For GitHub Actions,
+  configure `ANDROID_STORE_PASSWORD`, `ANDROID_KEY_ALIAS`, and
+  `ANDROID_KEY_PASSWORD` as GitHub Secrets. Provide the keystore either as
+  `ANDROID_KEYSTORE_BASE64` or leave
+  `apps/mobile/android/keystore/splan-release.jks` in the checkout. The
+  workflow never signs release APKs with the debug key and includes an Android
+  signing-status file in the release assets.
+- For local Android release builds, export the same environment values before
+  running Flutter, for example:
+  `export ANDROID_KEYSTORE_PATH=/path/to/splan-release.jks`,
+  `export ANDROID_STORE_PASSWORD="<keystore-password>"`,
+  `export ANDROID_KEY_ALIAS="<key-alias>"`, and
+  `export ANDROID_KEY_PASSWORD="<key-password>"`. Do not commit these values
+  to the repository.
 - The iOS output is simulator-only; an installable iPhone IPA needs Apple
   distribution signing and provisioning, which this workflow does not claim
   to provide. Desktop packages are also unsigned, consistent with ADR 0007.
@@ -229,3 +245,25 @@ docs/
   for the changed files passed. Device integration tests were not rerun for this
   service-only change; previous Android/iOS integration evidence is listed in
   `docs/milestones/M6.md`.
+
+## Follow-up: Date Rollover, Notification Probe, and Apache License (2026-11-09)
+
+- Desktop and mobile task boards now refresh when the local calendar date
+  changes while the app remains open. Desktop uses a 30-second local-date
+  check plus visibility/focus refresh; mobile uses a 30-second timer plus
+  lifecycle-resume synchronization.
+- Added a desktop regression test for date rollover while the panel remains
+  open.
+- Added `apps/mobile/integration_test/notification_delivery_probe_test.dart`
+  as a device-level probe for reminder delivery; it is not a substitute for
+  physical-device notification verification.
+- Validation passed: Prettier, ESLint, TypeScript typecheck, 39 desktop
+  Vitest tests, 110 Rust tests, strict Clippy, `flutter analyze`, and
+  `flutter test`.
+- Rebuilt the macOS desktop app and DMG, then installed the app at
+  `/Applications/Splan.app`.
+- Adopted Apache-2.0 as the project license. Added the root `LICENSE` file and
+  declared `Apache-2.0` in the root/desktop package metadata, Cargo metadata,
+  and mobile pubspec metadata.
+- Pushed the date-rollover fix and notification probe to `main` as
+  `d3caa35` and `120a4e1`.

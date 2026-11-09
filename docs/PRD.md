@@ -4,6 +4,7 @@
 **Name:** Splan (working name)  
 **Core promise:** 让重要的事情，主动出现在你面前。  
 **Platforms:** macOS, Windows, iPhone, Android.  
+**License:** Apache-2.0\
 **Product strategy:** staged delivery, local-first core, architecture ready for eventual sync.
 
 ## 2. Priorities

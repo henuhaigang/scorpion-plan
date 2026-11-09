@@ -34,18 +34,24 @@ jobs:
         id: android-signing
         env:
           ANDROID_KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+          ANDROID_STORE_PASSWORD: ${{ secrets.ANDROID_STORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
         shell: bash
         run: |
+          if [[ -z "$ANDROID_STORE_PASSWORD" || -z "$ANDROID_KEY_ALIAS" || -z "$ANDROID_KEY_PASSWORD" ]]; then
+            echo "signed=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
           if [[ -n "$ANDROID_KEYSTORE_BASE64" ]]; then
             keystore="$RUNNER_TEMP/splan-upload-key.jks"
             printf '%s' "$ANDROID_KEYSTORE_BASE64" | base64 --decode > "$keystore"
             echo "ANDROID_KEYSTORE_PATH=$keystore" >> "$GITHUB_ENV"
-            echo "signed=true" >> "$GITHUB_OUTPUT"
-          elif [[ -f "apps/mobile/android/keystore/splan-release.jks" ]]; then
-            echo "signed=true" >> "$GITHUB_OUTPUT"
-          else
+          elif [[ ! -f "apps/mobile/android/keystore/splan-release.jks" ]]; then
             echo "signed=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+          echo "signed=true" >> "$GITHUB_OUTPUT"
       - name: Build APK and App Bundle
         working-directory: apps/mobile
         env:

@@ -5,6 +5,8 @@ The desktop client uses Tauri 2, React, TypeScript, Rust, and SQLite. The
 mobile clients use Flutter, Dart, SQLite, and native home-screen widgets.
 Core task management works offline; cloud sync is out of scope for V1.
 
+Splan is licensed under the Apache License 2.0; see [LICENSE](LICENSE).
+
 ## Repository
 
 ```text
@@ -14,6 +16,7 @@ apps/
 docs/
   adr/         Architecture decisions
   milestones/  Implementation and validation reports
+LICENSE        Apache-2.0 license
 ```
 
 Product and engineering requirements are documented in
@@ -87,21 +90,25 @@ Pushing to `main` runs [Client releases](.github/workflows/release.yml). After
 all platform builds and tests pass, it publishes a commit-specific GitHub
 prerelease containing macOS DMG, Windows MSI/NSIS, Android APK/AAB, and an
 iOS Simulator debug archive. The iOS archive is not installable on physical
-iPhones; Android packages are unsigned until the four signing secrets described
-in [docs/V1_RELEASE.md](docs/V1_RELEASE.md) are configured. Desktop packages
-are unsigned.
+iPhones. Android packages are signed when a keystore is available and the
+required Android signing environment values described in
+[docs/V1_RELEASE.md](docs/V1_RELEASE.md) are configured; the release includes
+an Android signing-status file. Desktop packages are unsigned.
 
 ## Current status
 
 Desktop and mobile task flows, local SQLite persistence, reminder handling,
-and native widget targets are implemented. Flutter analysis and unit tests
-pass; Android and iOS apps install and launch on their simulators. The macOS
-app is installed in `~/Applications/Splan.app`; the `⌘⇧Space` shortcut,
-panel persistence while moving the pointer away from the menu bar, and
-single-click outside dismissal were verified against the packaged app. Direct
-Android/iOS home-screen widget placement/tapping and physical-device behavior
-remain unverified. Do not treat a source change or frontend-only test as a
-successful native build. Detailed evidence and remaining risks are in
+and native widget targets are implemented. Desktop and mobile boards now
+refresh when the local date changes while the app remains open. Flutter
+analysis and unit tests pass; Android and iOS apps install and launch on
+their simulators. The macOS app is installed in `/Applications/Splan.app`;
+the `⌘⇧Space` shortcut, panel persistence while moving the pointer away from
+the menu bar, and single-click outside dismissal were verified against the
+packaged app. A mobile notification-delivery probe is available for
+device-level integration testing. Direct Android/iOS home-screen widget
+placement/tapping and physical-device notification delivery remain unverified.
+Do not treat a source change or frontend-only test as a successful native
+build. Detailed evidence and remaining risks are in
 [docs/V1_RELEASE.md](docs/V1_RELEASE.md) and
 [docs/milestones/M6.md](docs/milestones/M6.md).
 
@@ -114,3 +121,8 @@ successful native build. Detailed evidence and remaining risks are in
 - Timestamps are UTC instants; schedule dates and wall-clock times remain
   separate.
 - No account, analytics, ads, or cloud requirement in V1.
+
+## License
+
+Splan is released under the Apache License 2.0. The full license text is in
+[LICENSE](LICENSE).

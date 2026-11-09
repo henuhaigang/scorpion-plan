@@ -3,6 +3,8 @@
 Flutter client for Splan. Tasks are stored locally; widgets receive a compact
 snapshot from the app and do not access the task database directly.
 
+Splan is licensed under the Apache License 2.0; see [LICENSE](../../LICENSE).
+
 ## Development and verification
 
 From this directory:
@@ -51,10 +53,14 @@ The Android and iOS widgets use the same compact indigo/slate visual language
 as the mobile app. The OS controls widget sizing, refresh timing, and home
 screen placement.
 
-## Latest simulator verification
+## Latest verification
 
-On 2026-11-01, `flutter analyze` reported no issues and all 18 `flutter test`
-tests passed. The app was rebuilt, installed, and launched on the Android
+On 2026-11-09, `flutter analyze` reported no issues and `flutter test`
+passed. The mobile home page now refreshes the task board when the local date
+changes while the app remains open. A notification-delivery probe was added
+under `integration_test/` for device-level reminder verification.
+
+On 2026-11-01, the app was rebuilt, installed, and launched on the Android
 emulator (`emulator-5554`) and iPhone 16 Pro simulator
 (`EEB96DB5-39B8-4B91-A3CB-1FCB196CDF88`). Directly placing/tapping the widgets
 on the simulator home screens is still a separate, unverified OS interaction.

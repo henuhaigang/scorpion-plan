@@ -6,6 +6,7 @@
 - Local databases use versioned migrations; core task operations work offline.
 - Future cloud: Java, Spring Boot, PostgreSQL. Cloud sync is not part of V1.
 - Validation uses frontend and Dart tests, Rust tests, mobile integration tests, and platform acceptance checks where the OS permits them.
+- Project license: Apache-2.0; see `LICENSE` and `docs/adr/0010-apache-2-0-license.md`.
 
 Framework and storage decisions are recorded in `docs/adr/`. Builds, simulator evidence, and remaining platform gaps are tracked in `docs/V1_RELEASE.md` and the milestone reports.
 

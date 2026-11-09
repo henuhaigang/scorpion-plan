@@ -3,6 +3,7 @@ name = "splan-desktop"
 version = "0.1.0"
 description = "Splan — local-first personal task and schedule app (desktop)"
 authors = ["Splan"]
+license = "Apache-2.0"
 edition = "2021"
 rust-version = "1.77"
 

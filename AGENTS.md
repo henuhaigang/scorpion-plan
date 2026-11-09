@@ -41,6 +41,7 @@ Read this file and all documents referenced below before implementing features.
 - User-facing copy should be concise, accessible, and localized-ready; initial UI language is Simplified Chinese.
 - Use dependency injection for current time (`Clock` or equivalent) in domain/application tests.
 - Keep a changelog of decisions in `docs/adr/`.
+- Splan is licensed under Apache-2.0; keep the root `LICENSE` and package metadata aligned.
 
 ## Default technical direction
 - Desktop: Tauri 2 + React + TypeScript.
