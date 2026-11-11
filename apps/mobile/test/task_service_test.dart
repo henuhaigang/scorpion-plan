@@ -228,8 +228,7 @@ void main() {
       expect((await service.loadBoard()).todayUntimed.single.title, '模拟器任务');
     });
 
-    testWidgets('shows a wide, compact empty state on the history page',
-        (tester) async {
+    testWidgets('fills the history page with its empty state', (tester) async {
       tester.view.physicalSize = const Size(390, 844);
       tester.view.devicePixelRatio = 1;
       addTearDown(tester.view.resetPhysicalSize);
@@ -242,10 +241,14 @@ void main() {
       await tester.tap(find.byTooltip('历史'));
       await tester.pumpAndSettle();
 
-      final emptyCard = find.byKey(const ValueKey('history-empty-card'));
+      final emptyPage = find.byKey(const ValueKey('history-empty-page'));
       expect(find.text('暂无历史记录'), findsOneWidget);
-      expect(tester.getSize(emptyCard).width, greaterThan(300));
-      expect(tester.getSize(emptyCard).height, lessThan(150));
+      expect(tester.getSize(emptyPage).width, 390);
+      expect(tester.getSize(emptyPage).height, greaterThan(600));
+      expect(
+        find.descendant(of: emptyPage, matching: find.byType(Card)),
+        findsNothing,
+      );
     });
 
     testWidgets('refreshes the task board when the local date changes',
