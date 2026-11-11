@@ -228,6 +228,26 @@ void main() {
       expect((await service.loadBoard()).todayUntimed.single.title, '模拟器任务');
     });
 
+    testWidgets('shows a wide, compact empty state on the history page',
+        (tester) async {
+      tester.view.physicalSize = const Size(390, 844);
+      tester.view.devicePixelRatio = 1;
+      addTearDown(tester.view.resetPhysicalSize);
+      addTearDown(tester.view.resetDevicePixelRatio);
+
+      await tester.pumpWidget(
+        MaterialApp(home: HomePage(service: service)),
+      );
+      await tester.pumpAndSettle();
+      await tester.tap(find.byTooltip('历史'));
+      await tester.pumpAndSettle();
+
+      final emptyCard = find.byKey(const ValueKey('history-empty-card'));
+      expect(find.text('暂无历史记录'), findsOneWidget);
+      expect(tester.getSize(emptyCard).width, greaterThan(300));
+      expect(tester.getSize(emptyCard).height, lessThan(150));
+    });
+
     testWidgets('refreshes the task board when the local date changes',
         (tester) async {
       var now = DateTime(2026, 10, 30, 23, 59);
