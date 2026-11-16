@@ -4,6 +4,7 @@ Splan is a local-first task and schedule app for macOS, iOS, and Android.
 The desktop client uses Tauri 2, React, TypeScript, Rust, and SQLite. The
 mobile clients use Flutter, Dart, SQLite, and native home-screen widgets.
 Core task management works offline; cloud sync is out of scope for V1.
+<img width="2746" height="1878" alt="image" src="https://github.com/user-attachments/assets/25a87a72-2f98-457e-86b7-61221770a1b6" />
 
 Splan is licensed under the Apache License 2.0; see [LICENSE](LICENSE).
 
